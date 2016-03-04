@@ -5,6 +5,7 @@ Gibbs sampling truth finder
 """
 
 import pandas as pd
+import numpy as np
 import copy
 import random
 
@@ -85,6 +86,27 @@ def get_accuracy(data, prob, s_index):
     return accuracy
 
 
+def get_dist_metric(data, truth_obj_list, prob):
+    prob_gt = []
+    val = []
+    for obj_index in range(len(data.O.drop_duplicates())):
+        possible_values = sorted(list(set(data[data.O == obj_index].V)))
+        val.append(possible_values)
+        prob_gt.append([0]*len(possible_values))
+    for obj_ind, v_true in enumerate(truth_obj_list):
+        for v_ind, v in enumerate(val[obj_ind]):
+            if v == v_true:
+                prob_gt[obj_ind][v_ind] = 1
+    prob_gt_vector = []
+    prob_vector = []
+    for i in range(len(prob_gt)):
+        prob_gt_vector += prob_gt[i]
+        prob_vector += prob[i]
+    dist_metric = np.dot(prob_gt_vector, prob_vector)
+    dist_metric_norm = dist_metric/len(prob_gt)
+    return dist_metric_norm
+
+
 if __name__ == '__main__':
     data = pd.read_csv('../../data/observation.csv', names=['S', 'O', 'V'])
     accuracy_data = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
@@ -124,5 +146,7 @@ if __name__ == '__main__':
                 round_compl = True
         iter_number += 1
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-    print accuracy_list
-    print iter_number
+    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+
+    print 'dist: {}'.format(dist_metric)
+    print 'iter number: {}'.format(iter_number)
