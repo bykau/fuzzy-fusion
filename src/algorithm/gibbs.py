@@ -17,6 +17,7 @@ def init_var(data, accuracy):
     init_prob = []
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
+    accuracy_ind = sorted(data.S.drop_duplicates())
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
         possible_values = sorted(list(set(data[data.O == obj_index].V)))
@@ -24,8 +25,8 @@ def init_var(data, accuracy):
         l = len(possible_values)
         init_prob.append([1./l]*l)
     random.shuffle(obj_index_list)
-    random.shuffle(accuracy_list)
-    var_index = [obj_index_list, accuracy_list]
+    random.shuffle(accuracy_ind)
+    var_index = [obj_index_list, accuracy_ind]
 
     return observ_val, init_prob, var_index, accuracy_list, s_number
 
@@ -65,6 +66,25 @@ def get_prob(data, n, accuracy_list, obj_index):
     return likelihood
 
 
+def get_accuracy(data, prob, s_index):
+    p_sum = 0.
+    size = 0.
+    for obj_index in sorted(data.O.drop_duplicates()):
+        observed_val = list(data[(data.S == s_index) & (data.O == obj_index)].V)
+        if len(observed_val) != 0:
+            observed_val == observed_val[0]
+        else:
+            continue
+        size += 1
+        possible_values = sorted(list(set(data[data.O == obj_index].V)))
+        for v_ind, v in enumerate(possible_values):
+            if v == observed_val:
+                p_sum += prob[obj_index][v_ind]
+                break
+    accuracy = p_sum/size
+    return accuracy
+
+
 if __name__ == '__main__':
     data = pd.read_csv('../../data/observation.csv', names=['S', 'O', 'V'])
     accuracy_data = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
@@ -85,4 +105,5 @@ if __name__ == '__main__':
         o_ind = var_index[0].pop()
         prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
     else:
-        a_index = var_index[1].pop()
+        s_index = var_index[1].pop()
+        accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
