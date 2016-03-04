@@ -125,26 +125,28 @@ if __name__ == '__main__':
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
+        indexes = copy.deepcopy(var_index)
         accuracy_prev = copy.copy(accuracy_list)
         round_compl = False
         while not round_compl:
-            if len(var_index[0])!= 0 and len(var_index[1])!= 0:
+            if len(indexes[0])!= 0 and len(indexes[1])!= 0:
                 r = random.randint(0, 1)
                 if r == 1:
-                    o_ind = var_index[0].pop()
+                    o_ind = indexes[0].pop()
                     prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
                 else:
-                    s_index = var_index[1].pop()
+                    s_index = indexes[1].pop()
                     accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-            elif len(var_index[0])==0 and len(var_index[1])!=0:
-                    s_index = var_index[1].pop()
+            elif len(indexes[0])==0 and len(indexes[1])!=0:
+                    s_index = indexes[1].pop()
                     accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-            elif len(var_index[0])!=0 and len(var_index[1])==0:
-                o_ind = var_index[0].pop()
+            elif len(indexes[0])!=0 and len(indexes[1])==0:
+                o_ind = indexes[0].pop()
                 prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
             else:
                 round_compl = True
         iter_number += 1
+        print iter_number
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
     dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
 
