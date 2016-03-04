@@ -8,6 +8,7 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 
 import numpy as np
 import pandas as pd
+import copy
 
 max_rounds = 30
 eps = 0.001
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
         prob = get_prob(data=data, accuracy=accuracy_list)
-        accuracy_prev = accuracy_list
+        accuracy_prev = copy.copy(accuracy_list)
         accuracy_list = get_accuracy(data=data, prob=prob)
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
