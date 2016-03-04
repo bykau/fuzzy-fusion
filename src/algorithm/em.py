@@ -9,7 +9,6 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 import numpy as np
 import pandas as pd
 
-s_number = 5
 max_rounds = 30
 eps = 0.001
 
@@ -104,11 +103,13 @@ def get_dist_metric(prob_gt, prob):
 
 if __name__ == '__main__':
     data = pd.read_csv('../../data/observation.csv', names=['S', 'O', 'V'])
+    accuracy = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
+    s_number = len(accuracy.S)
+    accuracy_list = list(accuracy.A)
     truth_obj_list = [6, 8, 9, 15, 16, 10, 11, 7, 18, 20]
 
     accuracy_delta = 0.3
     iter_number = 0
-    accuracy_list = [0.8]*s_number
     while accuracy_delta > eps and iter_number < max_rounds:
         prob = get_prob(data=data, accuracy=accuracy_list)
         accuracy_prev = accuracy_list
