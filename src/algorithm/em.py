@@ -98,7 +98,8 @@ def get_dist_metric(prob_gt, prob):
         prob_gt_vector += prob_gt[i]
         prob_vector += prob[i]
     dist_metric = np.dot(prob_gt_vector, prob_vector)
-    return dist_metric
+    dist_metric_norm = dist_metric/len(prob_gt)
+    return dist_metric_norm
 
 
 if __name__ == '__main__':
