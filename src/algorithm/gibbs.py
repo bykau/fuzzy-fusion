@@ -24,7 +24,7 @@ def init_var(data, accuracy):
         possible_values = sorted(list(set(data[data.O == obj_index].V)))
         observ_val.append(possible_values)
         l = len(possible_values)
-        init_prob.append([1./l]*l)
+        init_prob.append(run_float(scalar=1, vector_size=l))
     random.shuffle(obj_index_list)
     random.shuffle(accuracy_ind)
     var_index = [obj_index_list, accuracy_ind]
@@ -105,6 +105,13 @@ def get_dist_metric(data, truth_obj_list, prob):
     dist_metric = np.dot(prob_gt_vector, prob_vector)
     dist_metric_norm = dist_metric/len(prob_gt)
     return dist_metric_norm
+
+
+def run_float(scalar, vector_size):
+    random_vector = [random.random() for i in range(vector_size)]
+    random_vector_sum = sum(random_vector)
+    random_vector = [scalar*i/random_vector_sum for i in random_vector]
+    return random_vector
 
 
 if __name__ == '__main__':
