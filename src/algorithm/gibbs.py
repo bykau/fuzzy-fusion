@@ -15,7 +15,7 @@ eps = 0.001
 
 def init_var(data, accuracy):
     observ_val = []
-    init_prob = []
+    # init_prob = []
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
     accuracy_ind = sorted(data.S.drop_duplicates())
@@ -23,13 +23,21 @@ def init_var(data, accuracy):
     for obj_index in obj_index_list:
         possible_values = sorted(list(set(data[data.O == obj_index].V)))
         observ_val.append(possible_values)
-        l = len(possible_values)
-        init_prob.append(run_float(scalar=1, vector_size=l))
+        # l = len(possible_values)
+        # init_prob.append(run_float(scalar=1, vector_size=l))
     random.shuffle(obj_index_list)
     random.shuffle(accuracy_ind)
     var_index = [obj_index_list, accuracy_ind]
+    return observ_val, var_index, accuracy_list, s_number
 
-    return observ_val, init_prob, var_index, accuracy_list, s_number
+
+def get_init_prob(data):
+    init_prob = []
+    obj_index_list = sorted(data.O.drop_duplicates())
+    for obj_index in obj_index_list:
+        l = len(sorted(list(set(data[data.O == obj_index].V))))
+        init_prob.append(run_float(scalar=1, vector_size=l))
+    return init_prob
 
 
 def get_n_params(data):
@@ -119,7 +127,8 @@ if __name__ == '__main__':
     accuracy_data = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
     truth_obj_list = [6, 8, 9, 15, 16, 10, 11, 7, 18, 20]
 
-    observ_val, prob, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
+    observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
+    prob = get_init_prob(data=data)
     accuracy_list__old = copy.copy(accuracy_list)
     prob_old = copy.deepcopy(prob)
     n_list = get_n_params(data=data)
