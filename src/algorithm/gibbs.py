@@ -4,7 +4,7 @@ Gibbs sampling truth finder
 @author: Evgeny Krivosheev (e.krivoshe@gmail.com)
 """
 
-import pandas as pd
+
 import numpy as np
 import copy
 import random
@@ -15,7 +15,6 @@ eps = 0.001
 
 def init_var(data, accuracy):
     observ_val = []
-    # init_prob = []
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
     accuracy_ind = sorted(data.S.drop_duplicates())
@@ -23,12 +22,10 @@ def init_var(data, accuracy):
     for obj_index in obj_index_list:
         possible_values = sorted(list(set(data[data.O == obj_index].V)))
         observ_val.append(possible_values)
-        # l = len(possible_values)
-        # init_prob.append(run_float(scalar=1, vector_size=l))
     random.shuffle(obj_index_list)
     random.shuffle(accuracy_ind)
     var_index = [obj_index_list, accuracy_ind]
-    return observ_val, var_index, accuracy_list, s_number
+    return [observ_val, var_index, accuracy_list, s_number]
 
 
 def get_init_prob(data):
@@ -122,49 +119,51 @@ def run_float(scalar, vector_size):
     return random_vector
 
 
-if __name__ == '__main__':
-    data = pd.read_csv('../../data/observation.csv', names=['S', 'O', 'V'])
-    accuracy_data = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
+def gibbs_sampl(data, accuracy_data):
     truth_obj_list = [6, 8, 9, 15, 16, 10, 11, 7, 18, 20]
-
     observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
-    prob = get_init_prob(data=data)
-    accuracy_list__old = copy.copy(accuracy_list)
-    prob_old = copy.deepcopy(prob)
     n_list = get_n_params(data=data)
+    dist_list = []
+    iter_number_list = []
 
-    possible_values = []
-    for obj_index in sorted(data.O.drop_duplicates()):
-        val = sorted(list(set(data[data.O == obj_index].V)))
-        possible_values.append(val)
+    for t in range(10):
+        prob = get_init_prob(data=data)
+        possible_values = []
+        for obj_index in sorted(data.O.drop_duplicates()):
+            val = sorted(list(set(data[data.O == obj_index].V)))
+            possible_values.append(val)
 
-    accuracy_delta = 0.3
-    iter_number = 0
-    while accuracy_delta > eps and iter_number < max_rounds:
-        indexes = copy.deepcopy(var_index)
-        accuracy_prev = copy.copy(accuracy_list)
-        round_compl = False
-        while not round_compl:
-            if len(indexes[0])!= 0 and len(indexes[1])!= 0:
-                r = random.randint(0, 1)
-                if r == 1:
+        accuracy_delta = 0.3
+        iter_number = 0
+        while accuracy_delta > eps and iter_number < max_rounds:
+            indexes = copy.deepcopy(var_index)
+            accuracy_prev = copy.copy(accuracy_list)
+            round_compl = False
+            while not round_compl:
+                if len(indexes[0])!= 0 and len(indexes[1])!= 0:
+                    r = random.randint(0, 1)
+                    if r == 1:
+                        o_ind = indexes[0].pop()
+                        prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
+                    else:
+                        s_index = indexes[1].pop()
+                        accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
+                elif len(indexes[0])==0 and len(indexes[1])!=0:
+                        s_index = indexes[1].pop()
+                        accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
+                elif len(indexes[0])!=0 and len(indexes[1])==0:
                     o_ind = indexes[0].pop()
                     prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
                 else:
-                    s_index = indexes[1].pop()
-                    accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-            elif len(indexes[0])==0 and len(indexes[1])!=0:
-                    s_index = indexes[1].pop()
-                    accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-            elif len(indexes[0])!=0 and len(indexes[1])==0:
-                o_ind = indexes[0].pop()
-                prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
-            else:
-                round_compl = True
-        iter_number += 1
-        print iter_number
-        accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+                    round_compl = True
+            iter_number += 1
+            accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
+        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
 
-    print 'dist: {}'.format(dist_metric)
-    print 'iter number: {}'.format(iter_number)
+        dist_list.append(dist_metric)
+        iter_number_list.append(iter_number)
+        print 'dist: {}'.format(dist_metric)
+        print 'iter number: {}'.format(iter_number)
+        print '___'
+
+    return [np.mean(dist_list), np.std(dist_list), np.mean(iter_number_list), np.std(iter_number_list)]
