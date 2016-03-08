@@ -71,6 +71,29 @@ def get_prob(prob, data, g_data, accuracy_list, obj_index):
     return prob
 
 
+def get_accuracy(data, g_data, prob, s_index, accuracy_old):
+    Psi_s = data[data.S == s_index]
+    G = g_data[g_data.Oi.isin(list(Psi_s.O))]
+    size = len(Psi_s)
+    p_sum = 0.
+    for psi in Psi_s.iterrows():
+        psi = psi[1]
+        a, b = 0., 0.
+        for g in G.iterrows():
+            g = g[1]
+            if g.Oi != psi.O:
+                continue
+            for acc_val in [0, 1]:
+                if acc_val == psi.V:
+                    a += prob[psi.O][psi.V]*accuracy_old*g.P
+                else:
+                    b += (1-prob[psi.O][psi.V])*(1-accuracy_old)*g.P
+        psi_prob = a/(a+b)
+        p_sum += psi_prob
+    accuracy = p_sum/size
+    return accuracy
+
+
 data = pd.read_csv('../../data/observation_test.csv', names=['S', 'O', 'V'])
 accuracy_data = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
 g_data = pd.read_csv('../../data/g.csv', names=['Oi', 'Oj', 'P'])
@@ -81,6 +104,8 @@ prob = get_init_prob(data=data)
 possible_values = [0, 1]
 
 o_ind = 0
+get_accuracy(data=data, g_data=g_data, prob=prob, s_index=0, accuracy_old=accuracy_list[0])
 prob[o_ind] = get_prob(prob=prob, data=data, g_data=g_data, accuracy_list=accuracy_list, obj_index=o_ind)
 
 print prob
+
