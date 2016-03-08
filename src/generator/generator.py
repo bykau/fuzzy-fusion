@@ -20,24 +20,25 @@ def generator(cov_list, p_list, ground_truth, claster_size):
                         continue
                     if random.uniform(0, 1) <= g_true:
                         if random.uniform(0, 1) <= p_s:
-                            val = true_val
+                            val = ground_truth[s]
                         else:
-                            val = 1-true_val
+                            val = 1-ground_truth[s]
                     else:
                         claster_ind = range(claster_size)
-                        claster_ind.remove(obj_ind)
+                        claster_ind.remove(s)
                         swp_index = random.choice(claster_ind)
                         if random.uniform(0, 1) <= p_s:
                             val = ground_truth[swp_index]
                         else:
                             val = 1-ground_truth[swp_index]
                     flag = True
+                    data.append([s, s, val])
                 else:
                     if random.uniform(0, 1) <= p_s:
                         val = true_val
                     else:
                         val = 1-true_val
-                data.append([s, obj_ind, val])
+                    data.append([s, obj_ind, val])
 
     g_list = []
     for o_i in range(number_of_obj):
