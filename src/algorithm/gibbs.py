@@ -119,8 +119,7 @@ def run_float(scalar, vector_size):
     return random_vector
 
 
-def gibbs_sampl(data, accuracy_data):
-    truth_obj_list = [6, 8, 9, 15, 16, 10, 11, 7, 18, 20]
+def gibbs_sampl(data, accuracy_data, truth_obj_list):
     observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
     n_list = get_n_params(data=data)
     dist_list = []
@@ -162,8 +161,5 @@ def gibbs_sampl(data, accuracy_data):
 
         dist_list.append(dist_metric)
         iter_number_list.append(iter_number)
-        print 'dist: {}'.format(dist_metric)
-        print 'iter number: {}'.format(iter_number)
-        print '___'
 
     return [np.mean(dist_list), np.std(dist_list), np.mean(iter_number_list), np.std(iter_number_list)]

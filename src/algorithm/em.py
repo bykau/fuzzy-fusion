@@ -23,7 +23,7 @@ def get_n_params(data):
     return n_list
 
 
-def get_accuracy(data, prob):
+def get_accuracy(data, prob, s_number):
     accuracy_list = []
     values = []
     for s_index in range(s_number):
@@ -47,7 +47,7 @@ def get_accuracy(data, prob):
     return accuracy_list
 
 
-def get_prob(data, accuracy):
+def get_prob(data, accuracy, truth_obj_list, accuracy_list):
     n_list = get_n_params(data=data)
     likelihood = []
     for obj_index in range(len(truth_obj_list)):
@@ -102,29 +102,19 @@ def get_dist_metric(prob_gt, prob):
     return dist_metric_norm
 
 
-if __name__ == '__main__':
-    data = pd.read_csv('../../data/observation.csv', names=['S', 'O', 'V'])
-    accuracy = pd.read_csv('../../data/accuracy.csv', names=['S', 'A'])
+def em(data, accuracy, truth_obj_list):
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
-    truth_obj_list = [6, 8, 9, 15, 16, 10, 11, 7, 18, 20]
-
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
-        prob = get_prob(data=data, accuracy=accuracy_list)
+        prob = get_prob(data=data, accuracy=accuracy_list, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list)
         accuracy_prev = copy.copy(accuracy_list)
-        accuracy_list = get_accuracy(data=data, prob=prob)
+        accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
 
     prob_gt, val = get_gt_prob(data=data, truth_obj_list=truth_obj_list)
     dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
 
-    print 'max_dist_metr: {}'.format(dist_metric)
-    print 'iter number: {}'.format(iter_number)
-    print '------------'
-    for v, p in zip(val, prob):
-        print v
-        print p
-        print '_____'
+    return [dist_metric, iter_number]
