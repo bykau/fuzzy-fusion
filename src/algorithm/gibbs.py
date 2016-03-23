@@ -11,6 +11,7 @@ import random
 
 max_rounds = 30
 eps = 0.001
+l = 2
 
 
 def init_var(data, accuracy):
@@ -32,27 +33,13 @@ def get_init_prob(data):
     init_prob = []
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        l = len(sorted(list(set(data[data.O == obj_index].V))))
         init_prob.append(run_float(scalar=1, vector_size=l))
     return init_prob
 
 
-def get_n_params(data):
-    n_list = []
-    obj_list = sorted(data.O.drop_duplicates())
-    for i in obj_list:
-        n = len(data[data.O == i].V.drop_duplicates()) - 1
-        n_list.append(n)
-    return n_list
-
-
-def get_prob(data, n, accuracy_list, obj_index):
+def get_prob(data, accuracy_list, obj_index):
     likelihood = []
-    observed_values = list(data[data.O == obj_index].V)
-    possible_values = sorted(list(set(observed_values)))
-    if n == 0:
-        likelihood.append(1.)
-        return likelihood
+    possible_values = [0, 1]
     for v_true in possible_values:
         a, b, b_sum = 1., 1., 0.
         a_not_completed = True
@@ -61,9 +48,9 @@ def get_prob(data, n, accuracy_list, obj_index):
                 accuracy = accuracy_list[inst[1].S]
                 v = inst[1].V
                 if v == v_possible:
-                    b *= n*accuracy/(1-accuracy)
+                    b *= accuracy/(1-accuracy)
                 if a_not_completed and v == v_true:
-                    a *= n*accuracy/(1-accuracy)
+                    a *= accuracy/(1-accuracy)
             a_not_completed = False
             b_sum += b
             b = 1
@@ -78,15 +65,11 @@ def get_accuracy(data, prob, s_index):
     for obj_index in sorted(data.O.drop_duplicates()):
         observed_val = list(data[(data.S == s_index) & (data.O == obj_index)].V)
         if len(observed_val) != 0:
-            observed_val == observed_val[0]
+            observed_val = observed_val[0]
         else:
             continue
+        p_sum += prob[obj_index][observed_val]
         size += 1
-        possible_values = sorted(list(set(data[data.O == obj_index].V)))
-        for v_ind, v in enumerate(possible_values):
-            if v == observed_val:
-                p_sum += prob[obj_index][v_ind]
-                break
     accuracy = p_sum/size
     return accuracy
 
@@ -95,7 +78,7 @@ def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
     val = []
     for obj_index in range(len(data.O.drop_duplicates())):
-        possible_values = sorted(list(set(data[data.O == obj_index].V)))
+        possible_values = [0, 1]
         val.append(possible_values)
         prob_gt.append([0]*len(possible_values))
     for obj_ind, v_true in enumerate(truth_obj_list):
@@ -121,7 +104,6 @@ def run_float(scalar, vector_size):
 
 def gibbs_sampl(data, accuracy_data, truth_obj_list):
     observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
-    n_list = get_n_params(data=data)
     dist_list = []
     iter_number_list = []
 
@@ -129,8 +111,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
         prob = get_init_prob(data=data)
         possible_values = []
         for obj_index in sorted(data.O.drop_duplicates()):
-            val = sorted(list(set(data[data.O == obj_index].V)))
-            possible_values.append(val)
+            possible_values.append([0, 1])
 
         accuracy_delta = 0.3
         iter_number = 0
@@ -143,7 +124,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                     r = random.randint(0, 1)
                     if r == 1:
                         o_ind = indexes[0].pop()
-                        prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
+                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
                     else:
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
@@ -152,7 +133,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
                 elif len(indexes[0])!=0 and len(indexes[1])==0:
                     o_ind = indexes[0].pop()
-                    prob[o_ind] = get_prob(data=data, n=n_list[o_ind], accuracy_list=accuracy_list, obj_index=o_ind)
+                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
                 else:
                     round_compl = True
             iter_number += 1
