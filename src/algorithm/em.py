@@ -7,57 +7,35 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 '''
 
 import numpy as np
-import pandas as pd
 import copy
 
 max_rounds = 30
 eps = 0.001
 
 
-def get_n_params(data):
-    n_list = []
-    obj_list = sorted(data.O.drop_duplicates())
-    for i in obj_list:
-        n = len(data[data.O == i].V.drop_duplicates()) - 1
-        n_list.append(n)
-    return n_list
-
-
 def get_accuracy(data, prob, s_number):
     accuracy_list = []
-    values = []
     for s_index in range(s_number):
         p_sum = 0.
         size = 0.
         for obj_index in range(len(data.O.drop_duplicates())):
             observed_val = list(data[(data.S == s_index) & (data.O == obj_index)].V)
             if len(observed_val) != 0:
-                observed_val == observed_val[0]
+                observed_val = observed_val[0]
             else:
                 continue
+            p_sum += prob[obj_index][observed_val]
             size += 1
-            possible_values = sorted(list(set(data[data.O == obj_index].V)))
-            values.append(possible_values)
-            for v_ind, v in enumerate(possible_values):
-                if v == observed_val:
-                    p_sum += prob[obj_index][v_ind]
-                    break
         accuracy = p_sum/size
         accuracy_list.append(accuracy)
     return accuracy_list
 
 
 def get_prob(data, accuracy, truth_obj_list, accuracy_list):
-    n_list = get_n_params(data=data)
     likelihood = []
     for obj_index in range(len(truth_obj_list)):
             likelihood.append([])
-            n = n_list[obj_index]
-            observed_values = list(data[data.O == obj_index].V)
-            possible_values = sorted(list(set(observed_values)))
-            if n == 0:
-                likelihood[obj_index].append(1.)
-                continue
+            possible_values = [0, 1]
             for v_true in possible_values:
                 a, b, b_sum = 1., 1., 0.
                 a_not_completed = True
@@ -66,9 +44,9 @@ def get_prob(data, accuracy, truth_obj_list, accuracy_list):
                         accuracy = accuracy_list[inst[1].S]
                         v = inst[1].V
                         if v == v_possible:
-                            b *= n*accuracy/(1-accuracy)
+                            b *= accuracy/(1-accuracy)
                         if a_not_completed and v == v_true:
-                            a *= n*accuracy/(1-accuracy)
+                            a *= accuracy/(1-accuracy)
                     a_not_completed = False
                     b_sum += b
                     b = 1
@@ -81,7 +59,7 @@ def get_gt_prob(data, truth_obj_list):
     prob_gt = []
     val = []
     for obj_index in range(len(data.O.drop_duplicates())):
-        possible_values = sorted(list(set(data[data.O == obj_index].V)))
+        possible_values = [0, 1]
         val.append(possible_values)
         prob_gt.append([0]*len(possible_values))
     for obj_ind, v_true in enumerate(truth_obj_list):
