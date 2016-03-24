@@ -107,7 +107,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
     dist_list = []
     iter_number_list = []
 
-    for t in range(10):
+    for t in range(15):
         prob = get_init_prob(data=data)
         possible_values = []
         for obj_index in sorted(data.O.drop_duplicates()):
