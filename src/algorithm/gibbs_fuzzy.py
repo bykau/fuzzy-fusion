@@ -13,8 +13,7 @@ def init_var(data, accuracy):
     accuracy_ind = sorted(data.S.drop_duplicates())
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        possible_values = sorted(list(set(data[data.O == obj_index].V)))
-        observ_val.append(possible_values)
+        observ_val.append(sorted(list(set(data[data.O == obj_index].V))))
     random.shuffle(obj_index_list)
     random.shuffle(accuracy_ind)
     var_index = [obj_index_list, accuracy_ind]
@@ -25,7 +24,7 @@ def get_init_prob(data):
     init_prob = []
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        init_prob.append(run_float(scalar=1, vector_size=2))
+        init_prob.append([0.5, 0.5])
     return init_prob
 
 
@@ -45,55 +44,67 @@ def get_factor(prob, psi, G, accuracy_list, obj_index, v):
             if psi.V == v:
                 factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]
             else:
-                factor += (1-accuracy_list[psi.S])*g.P*(1-prob[obj_index][v])
+                factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]
         elif g.Oj != obj_index and g.Oi == obj_index and psi.O == obj_index:
             for v_true in possible_values:
                 if psi.V == v_true:
-                    factor += accuracy_list[psi.S]*g.P*prob[obj_index][v_true]
+                    factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
                 else:
-                    factor += (1-accuracy_list[psi.S])*g.P*(1-prob[obj_index][v_true])
-        elif g.Oi != obj_index and g.Oj == obj_index and psi.O != obj_index:
-            if psi.V == v:
-                factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]
+                    factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+        elif g.Oi != obj_index:
+            if g.Oj == obj_index:
+                if psi.V == v:
+                    factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]
+                else:
+                    factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]
             else:
-                factor += (1-accuracy_list[psi.S])*g.P*(1-prob[obj_index][v])
+                for v_true in possible_values:
+                    if psi.V == v_true:
+                        factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+                    else:
+                        factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
     return factor
 
 
 def get_prob(prob, data, g_data, accuracy_list, obj_index):
-    G = g_data[(g_data.Oj == obj_index) | (g_data.Oi == obj_index)]
+    G = g_data[g_data.Oi.isin(g_data.Oi[g_data.Oj == obj_index])]
     Psi = data[data.O.isin(G.Oi.drop_duplicates())]
     possible_values = [0, 1]
     a, b = 1., 1.
     for psi in Psi.iterrows():
-        a = get_factor(prob=prob, psi=psi[1], G=G, accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[0])
-        b = get_factor(prob=prob, psi=psi[1], G=G, accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[1])
+        a *= get_factor(prob=prob, psi=psi[1], G=G[G.Oi == psi[1].O],
+                       accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[0])
+        b *= get_factor(prob=prob, psi=psi[1], G=G[G.Oi == psi[1].O],
+                       accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[1])
     prob = [a/(a+b), b/(a+b)]
     return prob
 
 
 def get_accuracy(data, g_data, prob, s_index, accuracy_old):
-    try:
-        Psi_s = data[data.S == s_index]
-        G = g_data[g_data.Oi.isin(list(Psi_s.O))]
-        size = len(Psi_s)
-        p_sum = 0.
-        for psi in Psi_s.iterrows():
-            psi = psi[1]
-            a, b = 0., 0.
-            for g in G.iterrows():
-                g = g[1]
-                if g.Oi != psi.O:
-                    continue
+    Psi_s = data[data.S == s_index]
+    G = g_data[g_data.Oi.isin(list(Psi_s.O))]
+    size = len(Psi_s)
+    p_sum = 0.
+    claster_flag = True
+    for psi in Psi_s.iterrows():
+        psi = psi[1]
+        a, b = 0., 0.
+        for g in G.iterrows():
+            g = g[1]
+            if g.Oi != psi.O:
+                continue
+            if g.P == 1:
+                psi_prob = prob[psi.O][psi.V]
+                claster_flag = False
+            else:
                 for acc_val in [0, 1]:
                     if acc_val == psi.V:
                         a += prob[psi.O][psi.V]*accuracy_old*g.P
                     else:
                         b += (1-prob[psi.O][psi.V])*(1-accuracy_old)*g.P
+        if claster_flag:
             psi_prob = a/(a+b)
-            p_sum += psi_prob
-    except IndexError:
-        pass
+        p_sum += psi_prob
     accuracy = p_sum/size
     return accuracy
 
@@ -123,8 +134,7 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
     observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
     dist_list = []
     iter_number_list = []
-
-    for t in range(10):
+    for t in range(15):
         prob = get_init_prob(data=data)
         accuracy_delta = 0.3
         iter_number = 0
