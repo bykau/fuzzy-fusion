@@ -31,7 +31,7 @@ def get_accuracy(data, prob, s_number):
     return accuracy_list
 
 
-def get_prob(data, accuracy, truth_obj_list, accuracy_list):
+def get_prob(data, truth_obj_list, accuracy_list):
     likelihood = []
     for obj_index in range(len(truth_obj_list)):
         a, b = 1., 1.
@@ -81,7 +81,7 @@ def em(data, accuracy, truth_obj_list):
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
-        prob = get_prob(data=data, accuracy=accuracy_list, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list)
+        prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list)
         accuracy_prev = copy.copy(accuracy_list)
         accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
