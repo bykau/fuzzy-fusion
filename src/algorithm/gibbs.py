@@ -38,24 +38,22 @@ def get_init_prob(data):
     return init_prob
 
 
-def get_factor(data, accuracy, v, v_true, p_v_obj):
-    p_true = p_v_obj[v_true]
+def get_factor(data, accuracy, v, v_true):
     if v == v_true:
-        factor = accuracy*p_true
+        factor = accuracy
     else:
-        factor = (1 - accuracy)*p_true
+        factor = (1 - accuracy)
     return factor
 
 
-def get_prob(data, accuracy_list, obj_index, prob_old):
+def get_prob(data, accuracy_list, obj_index):
     possible_values = [0, 1]
     a, b = 1., 1.
-    p_v_obj = prob_old[obj_index]
     for inst in data[data.O == obj_index].iterrows():
         accuracy = accuracy_list[inst[1].S]
         v = inst[1].V
-        a *= get_factor(data, accuracy, v, possible_values[0], p_v_obj)
-        b *= get_factor(data, accuracy, v, possible_values[1], p_v_obj)
+        a *= get_factor(data, accuracy, v, possible_values[0])
+        b *= get_factor(data, accuracy, v, possible_values[1])
     likelihood = [a/(a+b), b/(a+b)]
     return likelihood
 
@@ -120,9 +118,8 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                 if len(indexes[0])!= 0 and len(indexes[1])!= 0:
                     r = random.randint(0, 1)
                     if r == 1:
-                        prob_old = copy.deepcopy(prob)
                         o_ind = indexes[0].pop()
-                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, prob_old=prob_old)
+                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
                     else:
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
@@ -132,7 +129,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                 elif len(indexes[0])!=0 and len(indexes[1])==0:
                     prob_old = copy.deepcopy(prob)
                     o_ind = indexes[0].pop()
-                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, prob_old=prob_old)
+                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
                 else:
                     round_compl = True
             iter_number += 1

@@ -43,27 +43,27 @@ def get_factor(prob, psi, G, accuracy_list, obj_index, v):
         g = g[1]
         if g.Oj == obj_index and g.Oi == obj_index and psi.O == obj_index:
             if psi.V == v:
-                factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]
+                factor += accuracy_list[psi.S]*g.P
             else:
-                factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]
+                factor += (1-accuracy_list[psi.S])*g.P
         elif g.Oj != obj_index and g.Oi == obj_index and psi.O == obj_index:
             for v_true in possible_values:
                 if psi.V == v_true:
-                    factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+                    factor += accuracy_list[psi.S]*g.P*prob[int(g.Oj)][v_true]
                 else:
-                    factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+                    factor += (1-accuracy_list[psi.S])*g.P*prob[int(g.Oj)][v_true]
         elif g.Oi != obj_index:
             if g.Oj == obj_index:
                 if psi.V == v:
-                    factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]
+                    factor += accuracy_list[psi.S]*g.P
                 else:
-                    factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]
+                    factor += (1-accuracy_list[psi.S])*g.P
             else:
                 for v_true in possible_values:
                     if psi.V == v_true:
-                        factor += accuracy_list[psi.S]*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+                        factor += accuracy_list[psi.S]*g.P*prob[int(g.Oj)][v_true]
                     else:
-                        factor += (1-accuracy_list[psi.S])*g.P*prob[obj_index][v]*prob[int(g.Oj)][v_true]
+                        factor += (1-accuracy_list[psi.S])*g.P*prob[int(g.Oj)][v_true]
     return factor
 
 
