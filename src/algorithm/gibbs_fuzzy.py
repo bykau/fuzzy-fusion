@@ -28,6 +28,7 @@ def get_init_prob(data):
     return init_prob
 
 
+#for randomize initial prob
 def run_float(scalar, vector_size):
     random_vector = [random.random() for i in range(vector_size)]
     random_vector_sum = sum(random_vector)
@@ -72,10 +73,13 @@ def get_prob(prob, data, g_data, accuracy_list, obj_index):
     possible_values = [0, 1]
     a, b = 1., 1.
     for psi in Psi.iterrows():
-        a *= get_factor(prob=prob, psi=psi[1], G=G[G.Oi == psi[1].O],
-                       accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[0])
-        b *= get_factor(prob=prob, psi=psi[1], G=G[G.Oi == psi[1].O],
-                       accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[1])
+        psi = psi[1]
+        g_obj = G[G.Oi == psi.O]
+        a *= get_factor(prob=prob, psi=psi, G=g_obj,
+                        accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[0])
+        b *= get_factor(prob=prob, psi=psi, G=g_obj,
+                        accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[1])
+
     prob = [a/(a+b), b/(a+b)]
     return prob
 
@@ -131,10 +135,10 @@ def get_dist_metric(data, truth_obj_list, prob):
 
 
 def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
-    observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
     dist_list = []
     iter_number_list = []
-    for t in range(15):
+    for t in range(10):
+        observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
         prob = get_init_prob(data=data)
         accuracy_delta = 0.3
         iter_number = 0
@@ -168,4 +172,4 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
         dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
         dist_list.append(dist_metric)
         iter_number_list.append(iter_number)
-    return [np.mean(dist_list), np.std(dist_list), np.mean(iter_number_list), np.std(iter_number_list)]
+    return [np.mean(dist_list), np.mean(iter_number_list)]

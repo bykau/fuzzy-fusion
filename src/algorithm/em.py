@@ -13,6 +13,14 @@ max_rounds = 30
 eps = 0.001
 
 
+def get_init_prob(data):
+    init_prob = []
+    obj_index_list = sorted(data.O.drop_duplicates())
+    for obj_index in obj_index_list:
+        init_prob.append([0.5, 0.5])
+    return init_prob
+
+
 def get_accuracy(data, prob, s_number):
     accuracy_list = []
     for s_index in range(s_number):
@@ -31,22 +39,27 @@ def get_accuracy(data, prob, s_number):
     return accuracy_list
 
 
-def get_prob(data, truth_obj_list, accuracy_list):
+def get_factor(data, accuracy, v, v_true, p_v_obj):
+    p_true = p_v_obj[v_true]
+    if v == v_true:
+        factor = accuracy*p_true
+    else:
+        factor = (1 - accuracy)*p_true
+    return factor
+
+
+def get_prob(data, truth_obj_list, accuracy_list, prob):
     likelihood = []
+    possible_values = [0, 1]
     for obj_index in range(len(truth_obj_list)):
+        p_v_obj = prob[obj_index]
         a, b = 1., 1.
-        v_possible = 0
         for inst in data[data.O == obj_index].iterrows():
             accuracy = accuracy_list[inst[1].S]
-            # TO DO !!!
-            if accuracy == 1:
-                accuracy = 0.95
             v = inst[1].V
-            if v == v_possible:
-                b *= accuracy/(1-accuracy)
-            else:
-                a *= accuracy/(1-accuracy)
-        likelihood.append([b/(a+b), a/(a+b)])
+            a *= get_factor(data, accuracy, v, possible_values[0], p_v_obj)
+            b *= get_factor(data, accuracy, v, possible_values[1], p_v_obj)
+        likelihood.append([a/(a+b), b/(a+b)])
     return likelihood
 
 
@@ -76,12 +89,13 @@ def get_dist_metric(prob_gt, prob):
 
 
 def em(data, accuracy, truth_obj_list):
+    prob = get_init_prob(data=data)
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
-        prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list)
+        prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list, prob=prob)
         accuracy_prev = copy.copy(accuracy_list)
         accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
@@ -89,5 +103,4 @@ def em(data, accuracy, truth_obj_list):
 
     prob_gt, val = get_gt_prob(data=data, truth_obj_list=truth_obj_list)
     dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
-
     return [dist_metric, iter_number]

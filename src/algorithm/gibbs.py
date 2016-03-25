@@ -33,29 +33,30 @@ def get_init_prob(data):
     init_prob = []
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        init_prob.append(run_float(scalar=1, vector_size=l))
+        # init_prob.append(run_float(scalar=1, vector_size=l))
+        init_prob.append([0.5, 0.5])
     return init_prob
 
 
-def get_prob(data, accuracy_list, obj_index):
-    likelihood = []
+def get_factor(data, accuracy, v, v_true, p_v_obj):
+    p_true = p_v_obj[v_true]
+    if v == v_true:
+        factor = accuracy*p_true
+    else:
+        factor = (1 - accuracy)*p_true
+    return factor
+
+
+def get_prob(data, accuracy_list, obj_index, prob_old):
     possible_values = [0, 1]
-    for v_true in possible_values:
-        a, b, b_sum = 1., 1., 0.
-        a_not_completed = True
-        for v_possible in possible_values:
-            for inst in data[data.O == obj_index].iterrows():
-                accuracy = accuracy_list[inst[1].S]
-                v = inst[1].V
-                if v == v_possible:
-                    b *= accuracy/(1-accuracy)
-                if a_not_completed and v == v_true:
-                    a *= accuracy/(1-accuracy)
-            a_not_completed = False
-            b_sum += b
-            b = 1
-        p = a/b_sum
-        likelihood.append(p)
+    a, b = 1., 1.
+    p_v_obj = prob_old[obj_index]
+    for inst in data[data.O == obj_index].iterrows():
+        accuracy = accuracy_list[inst[1].S]
+        v = inst[1].V
+        a *= get_factor(data, accuracy, v, possible_values[0], p_v_obj)
+        b *= get_factor(data, accuracy, v, possible_values[1], p_v_obj)
+    likelihood = [a/(a+b), b/(a+b)]
     return likelihood
 
 
@@ -103,16 +104,12 @@ def run_float(scalar, vector_size):
 
 
 def gibbs_sampl(data, accuracy_data, truth_obj_list):
-    observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
     dist_list = []
     iter_number_list = []
 
-    for t in range(15):
+    for t in range(10):
+        observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
         prob = get_init_prob(data=data)
-        possible_values = []
-        for obj_index in sorted(data.O.drop_duplicates()):
-            possible_values.append([0, 1])
-
         accuracy_delta = 0.3
         iter_number = 0
         while accuracy_delta > eps and iter_number < max_rounds:
@@ -123,8 +120,9 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                 if len(indexes[0])!= 0 and len(indexes[1])!= 0:
                     r = random.randint(0, 1)
                     if r == 1:
+                        prob_old = copy.deepcopy(prob)
                         o_ind = indexes[0].pop()
-                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
+                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, prob_old=prob_old)
                     else:
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
@@ -132,15 +130,14 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
                 elif len(indexes[0])!=0 and len(indexes[1])==0:
+                    prob_old = copy.deepcopy(prob)
                     o_ind = indexes[0].pop()
-                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
+                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, prob_old=prob_old)
                 else:
                     round_compl = True
             iter_number += 1
             accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
-
         dist_list.append(dist_metric)
         iter_number_list.append(iter_number)
-
-    return [np.mean(dist_list), np.std(dist_list), np.mean(iter_number_list), np.std(iter_number_list)]
+    return [np.mean(dist_list), np.mean(iter_number_list)]
