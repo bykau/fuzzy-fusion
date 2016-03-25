@@ -34,24 +34,19 @@ def get_accuracy(data, prob, s_number):
 def get_prob(data, accuracy, truth_obj_list, accuracy_list):
     likelihood = []
     for obj_index in range(len(truth_obj_list)):
-            likelihood.append([])
-            possible_values = [0, 1]
-            for v_true in possible_values:
-                a, b, b_sum = 1., 1., 0.
-                a_not_completed = True
-                for v_possible in possible_values:
-                    for inst in data[data.O == obj_index].iterrows():
-                        accuracy = accuracy_list[inst[1].S]
-                        v = inst[1].V
-                        if v == v_possible:
-                            b *= accuracy/(1-accuracy)
-                        if a_not_completed and v == v_true:
-                            a *= accuracy/(1-accuracy)
-                    a_not_completed = False
-                    b_sum += b
-                    b = 1
-                p = a/b_sum
-                likelihood[obj_index].append(p)
+        a, b = 1., 1.
+        v_possible = 0
+        for inst in data[data.O == obj_index].iterrows():
+            accuracy = accuracy_list[inst[1].S]
+            # TO DO !!!
+            if accuracy == 1:
+                accuracy = 0.95
+            v = inst[1].V
+            if v == v_possible:
+                b *= accuracy/(1-accuracy)
+            else:
+                a *= accuracy/(1-accuracy)
+        likelihood.append([b/(a+b), a/(a+b)])
     return likelihood
 
 
