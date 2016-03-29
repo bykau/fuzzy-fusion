@@ -13,7 +13,6 @@ def generator(cov_list, p_list, ground_truth, claster_size, g_true):
         for s in range(source_number):
             p_s = p_list[s]
             cov_s = cov_list[s]
-            prohib_ind = []
             for obj_ind in range(number_of_obj):
                 true_val = ground_truth[obj_ind]
                 if random.uniform(0, 1) <= cov_s:
@@ -31,7 +30,6 @@ def generator(cov_list, p_list, ground_truth, claster_size, g_true):
                                 val = ground_truth[swp_index]
                             else:
                                 val = 1-ground_truth[swp_index]
-                            prohib_ind.append(swp_index)
                     else:
                         if random.uniform(0, 1) <= p_s:
                             val = true_val
