@@ -10,7 +10,7 @@ import copy
 import random
 
 max_rounds = 30
-eps = 0.001
+eps = 0.01
 l = 2
 
 
@@ -105,7 +105,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
     dist_list = []
     iter_number_list = []
 
-    for t in range(10):
+    for t in range(1):
         observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
         prob = get_init_prob(data=data)
         accuracy_delta = 0.3
@@ -127,7 +127,6 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
                 elif len(indexes[0])!=0 and len(indexes[1])==0:
-                    prob_old = copy.deepcopy(prob)
                     o_ind = indexes[0].pop()
                     prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
                 else:

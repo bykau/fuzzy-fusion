@@ -3,7 +3,7 @@ import random
 import copy
 
 max_rounds = 30
-eps = 0.001
+eps = 0.01
 
 
 def init_var(data, accuracy):
@@ -137,7 +137,7 @@ def get_dist_metric(data, truth_obj_list, prob):
 def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
     dist_list = []
     iter_number_list = []
-    for t in range(10):
+    for t in range(1):
         observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
         prob = get_init_prob(data=data)
         accuracy_delta = 0.3
