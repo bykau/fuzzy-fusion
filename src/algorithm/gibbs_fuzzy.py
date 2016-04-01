@@ -3,88 +3,79 @@ import random
 import copy
 
 max_rounds = 30
-eps = 0.01
+eps = 0.05
 
 
 def init_var(data, accuracy):
-    observ_val = []
     s_number = len(accuracy.S)
     accuracy_list = list(accuracy.A)
     accuracy_ind = sorted(data.S.drop_duplicates())
     obj_index_list = sorted(data.O.drop_duplicates())
-    for obj_index in obj_index_list:
-        observ_val.append(sorted(list(set(data[data.O == obj_index].V))))
     random.shuffle(obj_index_list)
     random.shuffle(accuracy_ind)
     var_index = [obj_index_list, accuracy_ind]
-    return [observ_val, var_index, accuracy_list, s_number]
+    return [var_index, accuracy_list, s_number]
 
 
-def get_init_prob(data):
+def init_prob(data, values):
     init_prob = []
+    l = len(values)
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        init_prob.append([0.5, 0.5])
+        init_prob.append([1./l]*l)
     return init_prob
 
 
-#for randomize initial prob
-def run_float(scalar, vector_size):
-    random_vector = [random.random() for i in range(vector_size)]
-    random_vector_sum = sum(random_vector)
-    random_vector = [scalar*i/random_vector_sum for i in random_vector]
-    return random_vector
-
-
-def get_factor(prob, psi, G, accuracy_list, obj_index, v):
+def get_factor(psi, G, accuracy_list, obj_index, v, values, n):
     factor = 0.
-    possible_values = [0, 1]
     for g in G.iterrows():
         g = g[1]
-        if g.Oj == obj_index and g.Oi == obj_index and psi.O == obj_index:
+        if g.Oj == obj_index and g.Oi == obj_index: #and psi.O == obj_index:
             if psi.V == v:
                 factor += accuracy_list[psi.S]*g.P
             else:
-                factor += (1-accuracy_list[psi.S])*g.P
+                factor += (1-accuracy_list[psi.S])*g.P/n
         elif g.Oj != obj_index and g.Oi == obj_index and psi.O == obj_index:
-            for v_true in possible_values:
+            for v_true in values:
                 if psi.V == v_true:
-                    factor += accuracy_list[psi.S]*g.P*prob[int(g.Oj)][v_true]
+                    factor += accuracy_list[psi.S]*g.P
                 else:
-                    factor += (1-accuracy_list[psi.S])*g.P*prob[int(g.Oj)][v_true]
+                    factor += (1-accuracy_list[psi.S])*g.P/n
         elif g.Oi != obj_index:
             if g.Oj == obj_index:
                 if psi.V == v:
                     factor += accuracy_list[psi.S]*g.P
                 else:
-                    factor += (1-accuracy_list[psi.S])*g.P
+                    factor += (1-accuracy_list[psi.S])*g.P/n
             else:
-                for v_true in possible_values:
+                for v_true in values:
                     if psi.V == v_true:
-                        factor += accuracy_list[psi.S]*g.P*prob[int(g.Oj)][v_true]
+                        factor += accuracy_list[psi.S]*g.P
                     else:
-                        factor += (1-accuracy_list[psi.S])*g.P*prob[int(g.Oj)][v_true]
+                        factor += (1-accuracy_list[psi.S])*g.P/n
     return factor
 
 
-def get_prob(prob, data, g_data, accuracy_list, obj_index):
+def get_prob(data, g_data, accuracy_list, obj_index, values):
+    prob = []
     G = g_data[g_data.Oi.isin(g_data.Oi[g_data.Oj == obj_index])]
     Psi = data[data.O.isin(G.Oi.drop_duplicates())]
-    possible_values = [0, 1]
-    a, b = 1., 1.
+    l = len(values)
+    n = l - 1
+    term_list = [1]*l
     for psi in Psi.iterrows():
         psi = psi[1]
         g_obj = G[G.Oi == psi.O]
-        a *= get_factor(prob=prob, psi=psi, G=g_obj,
-                        accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[0])
-        b *= get_factor(prob=prob, psi=psi, G=g_obj,
-                        accuracy_list=accuracy_list, obj_index=obj_index, v=possible_values[1])
-
-    prob = [a/(a+b), b/(a+b)]
+        for v_ind, v in enumerate(values):
+            term_list[v_ind] *= get_factor(psi=psi, G=g_obj, accuracy_list=accuracy_list,
+                                           obj_index=obj_index, v=v, values=values, n=n)
+    denom = sum(term_list)
+    for v_ind in range(l):
+        prob.append(term_list[v_ind]/denom)
     return prob
 
 
-def get_accuracy(data, g_data, prob, s_index, accuracy_old):
+def get_accuracy(data, g_data, prob, s_index):
     Psi_s = data[data.S == s_index]
     G = g_data[g_data.Oi.isin(list(Psi_s.O))]
     size = len(Psi_s)
@@ -101,11 +92,9 @@ def get_accuracy(data, g_data, prob, s_index, accuracy_old):
                 psi_prob = prob[psi.O][psi.V]
                 claster_flag = False
             else:
-                for acc_val in [0, 1]:
-                    if acc_val == psi.V:
-                        a += prob[psi.O][psi.V]*accuracy_old*g.P
-                    else:
-                        b += (1-prob[psi.O][psi.V])*(1-accuracy_old)*g.P
+                oj_ind = int(g.Oj)
+                a += prob[oj_ind][psi.V]*g.P
+                b += (1-prob[oj_ind][psi.V])*g.P
         if claster_flag:
             psi_prob = a/(a+b)
         p_sum += psi_prob
@@ -113,13 +102,13 @@ def get_accuracy(data, g_data, prob, s_index, accuracy_old):
     return accuracy
 
 
-def get_dist_metric(data, truth_obj_list, prob):
-    possible_values = [0, 1]
+def get_dist_metric(data, truth_obj_list, prob, values):
     prob_gt = []
     val = []
+    l = len(values)
     for obj_index in range(len(data.O.drop_duplicates())):
-        val.append(possible_values)
-        prob_gt.append([0]*2)
+        val.append(values)
+        prob_gt.append([0]*l)
     for obj_ind, v_true in enumerate(truth_obj_list):
         for v_ind, v in enumerate(val[obj_ind]):
             if v == v_true:
@@ -134,42 +123,95 @@ def get_dist_metric(data, truth_obj_list, prob):
     return dist_metric_norm
 
 
-def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
-    dist_list = []
-    iter_number_list = []
-    for t in range(1):
-        observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
-        prob = get_init_prob(data=data)
-        accuracy_delta = 0.3
-        iter_number = 0
-        while accuracy_delta > eps and iter_number < max_rounds:
-            indexes = copy.deepcopy(var_index)
-            accuracy_prev = copy.copy(accuracy_list)
-            round_compl = False
-            while not round_compl:
-                        if len(indexes[0])!= 0 and len(indexes[1])!= 0:
-                            r = random.randint(0, 1)
-                            if r == 1:
-                                o_ind = indexes[0].pop()
-                                prob[o_ind] = get_prob(prob=prob, data=data, g_data=g_data,
-                                                       accuracy_list=accuracy_list, obj_index=o_ind)
-                            else:
-                                s_index = indexes[1].pop()
-                                accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
-                                                                      s_index=s_index, accuracy_old=accuracy_list[s_index])
-                        elif len(indexes[0]) == 0 and len(indexes[1]) != 0:
-                                s_index = indexes[1].pop()
-                                accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
-                                                                      s_index=s_index, accuracy_old=accuracy_list[s_index])
-                        elif len(indexes[0]) != 0 and len(indexes[1]) == 0:
-                            o_ind = indexes[0].pop()
-                            prob[o_ind] = get_prob(prob=prob, data=data, g_data=g_data,
-                                                   accuracy_list=accuracy_list, obj_index=o_ind)
-                        else:
-                            round_compl = True
-            iter_number += 1
-            accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
-        dist_list.append(dist_metric)
-        iter_number_list.append(iter_number)
-    return [np.mean(dist_list), np.mean(iter_number_list)]
+def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list, values):
+    var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
+    prob = init_prob(data=data, values=values)
+    accuracy_delta = 0.3
+    iter_number = 0
+    while accuracy_delta > eps and iter_number < max_rounds:
+        indexes = copy.deepcopy(var_index)
+        accuracy_prev = copy.copy(accuracy_list)
+        for o_ind in indexes[0]:
+            prob[o_ind] = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
+                                   obj_index=o_ind, values=values)
+        for s_index in indexes[1]:
+            accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob, s_index=s_index)
+
+        iter_number += 1
+        accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
+    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob, values=values)
+    return [dist_metric, iter_number]
+
+
+
+
+#
+#
+# import sys
+# import time
+# import pandas as pd
+# sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
+# from generator.generator import generator
+# from algorithm.gibbs import gibbs_sampl
+# from algorithm.gibbs_fuzzy import gibbs_fuzzy
+# from algorithm.em import em
+#
+# print 'Python version ' + sys.version
+# print 'Pandas version ' + pd.__version__
+#
+# s_number = 12
+# obj_number = 50
+# cl_size = 2
+# cov_list = [0.7]*s_number
+# p_list = [0.7]*s_number
+# accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
+# accuracy_for_df = [[i, accuracy_list[i]] for i in range(s_number)]
+# accuracy_data = pd.DataFrame(accuracy_for_df, columns=['S', 'A'])
+#
+# result_list = []
+# em_t = []
+# g_t = []
+# gf_t = []
+# # ground_truth = []
+# # for i in range(obj_number):
+# #     if i % 2 == 0:
+# #         ground_truth.append(1)
+# #     else:
+# #         ground_truth.append(0)
+# for g_true in [0.6, 0.7, 0.8, 0.9, 1.0]:#[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+#
+#     print g_true
+#     print '*****'
+#
+#     for i in range(3):
+#         print i
+#         ground_truth = [random.randint(0, 3) for i in range(obj_number)]
+#         data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, [0,1,2,3])
+#
+#         # t_em = time.time()
+#         # em_d, em_it = em(data=data, accuracy=accuracy_data, truth_obj_list=ground_truth, values=[0,1,2,3])
+#         # print em_d
+#         # ex_t_em = time.time() - t_em
+#         # em_t.append(ex_t_em)
+# #         print("--- %s seconds em ---" % (ex_t_em))
+#
+#         while True:
+#             try:
+#                 # t_g = time.time()
+#                 # g_d, g_it = gibbs_sampl(data=data, accuracy_data=accuracy_data, truth_obj_list=ground_truth)
+#                 # ex_t_g = time.time() - t_g
+#                 # g_t.append(ex_t_g)
+#                 # print("--- %s seconds g ---" % (ex_t_g))
+#
+#                 t_gf = time.time()
+#                 gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
+#                                           truth_obj_list=ground_truth, values = [0,1,2,3])
+#                 print gf_d
+#                 print '---'
+#                 ex_t_gf = time.time() - t_gf
+#                 gf_t.append(ex_t_gf)
+# #                 print("--- %s seconds gf ---" % (ex_t_gf))
+#                 break
+#             except ZeroDivisionError:
+#                 print 'zero {}'.fprmat(i)
+#         # result_list.append([g_true, em_d, gf_d])
