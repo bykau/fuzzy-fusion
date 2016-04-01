@@ -10,7 +10,7 @@ import numpy as np
 import copy
 
 max_rounds = 30
-eps = 0.001
+eps = 0.05
 
 
 def get_init_prob(data):
