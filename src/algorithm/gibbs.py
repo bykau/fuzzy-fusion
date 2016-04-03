@@ -62,19 +62,16 @@ def get_prob(data, accuracy_list, obj_index, values):
     return prob
 
 
-def get_accuracy(data, prob, s_number):
-    accuracy_list = []
-    for s_index in range(s_number):
-        p_sum = 0.
-        size = 0.
-        for psi in data[data.S == s_index].iterrows():
-            psi = psi[1]
-            observed_val = psi.V
-            p_sum += prob[psi.O][observed_val]
+def get_accuracy(data, prob, s_index):
+    p_sum = 0.
+    size = 0.
+    for psi in data[data.S == s_index].iterrows():
+        psi = psi[1]
+        observed_val = psi.V
+        p_sum += prob[psi.O][observed_val]
         size += 1
-        accuracy = p_sum/size
-        accuracy_list.append(accuracy)
-    return accuracy_list
+    accuracy = p_sum/size
+    return accuracy
 
 
 def get_dist_metric(data, truth_obj_list, prob, values):

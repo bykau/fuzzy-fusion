@@ -32,7 +32,7 @@ def get_accuracy(data, prob, s_number):
             psi = psi[1]
             observed_val = psi.V
             p_sum += prob[psi.O][observed_val]
-        size += 1
+            size += 1
         accuracy = p_sum/size
         accuracy_list.append(accuracy)
     return accuracy_list
