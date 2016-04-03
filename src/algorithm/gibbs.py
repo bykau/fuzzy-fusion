@@ -62,19 +62,19 @@ def get_prob(data, accuracy_list, obj_index, values):
     return prob
 
 
-def get_accuracy(data, prob, s_index):
-    p_sum = 0.
-    size = 0.
-    for obj_index in sorted(data.O.drop_duplicates()):
-        observed_val = list(data[(data.S == s_index) & (data.O == obj_index)].V)
-        if len(observed_val) != 0:
-            observed_val = observed_val[0]
-        else:
-            continue
-        p_sum += prob[obj_index][observed_val]
+def get_accuracy(data, prob, s_number):
+    accuracy_list = []
+    for s_index in range(s_number):
+        p_sum = 0.
+        size = 0.
+        for psi in data[data.S == s_index].iterrows():
+            psi = psi[1]
+            observed_val = psi.V
+            p_sum += prob[psi.O][observed_val]
         size += 1
-    accuracy = p_sum/size
-    return accuracy
+        accuracy = p_sum/size
+        accuracy_list.append(accuracy)
+    return accuracy_list
 
 
 def get_dist_metric(data, truth_obj_list, prob, values):

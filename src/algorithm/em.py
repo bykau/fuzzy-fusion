@@ -8,6 +8,7 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 
 import numpy as np
 import copy
+import random
 
 max_rounds = 30
 eps = 0.05
@@ -27,14 +28,11 @@ def get_accuracy(data, prob, s_number):
     for s_index in range(s_number):
         p_sum = 0.
         size = 0.
-        for obj_index in range(len(data.O.drop_duplicates())):
-            observed_val = list(data[(data.S == s_index) & (data.O == obj_index)].V)
-            if len(observed_val) != 0:
-                observed_val = observed_val[0]
-            else:
-                continue
-            p_sum += prob[obj_index][observed_val]
-            size += 1
+        for psi in data[data.S == s_index].iterrows():
+            psi = psi[1]
+            observed_val = psi.V
+            p_sum += prob[psi.O][observed_val]
+        size += 1
         accuracy = p_sum/size
         accuracy_list.append(accuracy)
     return accuracy_list
@@ -92,10 +90,10 @@ def get_dist_metric(prob_gt, prob):
     return dist_metric_norm
 
 
-def em(data, accuracy, truth_obj_list, values):
+def em(data, truth_obj_list, values):
     prob = init_prob(data=data, values=values)
-    s_number = len(accuracy.S)
-    accuracy_list = list(accuracy.A)
+    s_number = len(data.S.drop_duplicates())
+    accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
