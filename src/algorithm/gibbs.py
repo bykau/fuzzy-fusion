@@ -14,11 +14,11 @@ eps = 0.01
 l = 2
 
 
-def init_var(data, accuracy):
+def init_var(data):
     observ_val = []
-    s_number = len(accuracy.S)
-    accuracy_list = list(accuracy.A)
     accuracy_ind = sorted(data.S.drop_duplicates())
+    s_number = len(accuracy_ind)
+    accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
         possible_values = sorted(list(set(data[data.O == obj_index].V)))
@@ -29,33 +29,37 @@ def init_var(data, accuracy):
     return [observ_val, var_index, accuracy_list, s_number]
 
 
-def get_init_prob(data):
+def get_init_prob(data, values):
     init_prob = []
+    l = len(values)
     obj_index_list = sorted(data.O.drop_duplicates())
     for obj_index in obj_index_list:
-        # init_prob.append(run_float(scalar=1, vector_size=l))
-        init_prob.append([0.5, 0.5])
+        init_prob.append([1./l]*l)
     return init_prob
 
 
-def get_factor(data, accuracy, v, v_true):
+def get_factor(data, accuracy, v, v_true, n):
     if v == v_true:
         factor = accuracy
     else:
-        factor = (1 - accuracy)
+        factor = (1 - accuracy)/n
     return factor
 
 
-def get_prob(data, accuracy_list, obj_index):
-    possible_values = [0, 1]
-    a, b = 1., 1.
-    for inst in data[data.O == obj_index].iterrows():
-        accuracy = accuracy_list[inst[1].S]
-        v = inst[1].V
-        a *= get_factor(data, accuracy, v, possible_values[0])
-        b *= get_factor(data, accuracy, v, possible_values[1])
-    likelihood = [a/(a+b), b/(a+b)]
-    return likelihood
+def get_prob(data, accuracy_list, obj_index, values):
+    prob = []
+    l = len(values)
+    n = l - 1
+    term_list = [1]*l
+    for psi in data[data.O == obj_index].iterrows():
+        accuracy = accuracy_list[psi[1].S]
+        v = psi[1].V
+        for v_ind, v_true in enumerate(values):
+            term_list[v_ind] *= get_factor(data, accuracy, v, v_true, n)
+    denom = sum(term_list)
+    for v_ind in range(l):
+        prob.append(term_list[v_ind]/denom)
+    return prob
 
 
 def get_accuracy(data, prob, s_index):
@@ -73,13 +77,13 @@ def get_accuracy(data, prob, s_index):
     return accuracy
 
 
-def get_dist_metric(data, truth_obj_list, prob):
+def get_dist_metric(data, truth_obj_list, prob, values):
     prob_gt = []
     val = []
+    l = len(values)
     for obj_index in range(len(data.O.drop_duplicates())):
-        possible_values = [0, 1]
-        val.append(possible_values)
-        prob_gt.append([0]*len(possible_values))
+        val.append(values)
+        prob_gt.append([0]*l)
     for obj_ind, v_true in enumerate(truth_obj_list):
         for v_ind, v in enumerate(val[obj_ind]):
             if v == v_true:
@@ -101,13 +105,14 @@ def run_float(scalar, vector_size):
     return random_vector
 
 
-def gibbs_sampl(data, accuracy_data, truth_obj_list):
+def gibbs_sampl(data, truth_obj_list, values):
     dist_list = []
     iter_number_list = []
 
-    for t in range(1):
-        observ_val, var_index, accuracy_list, s_number = init_var(data=data, accuracy=accuracy_data)
-        prob = get_init_prob(data=data)
+    for t in range(5):
+        observ_val, var_index, accuracy_list, s_number = init_var(data=data)
+        prob = get_init_prob(data=data, values=values)
+        accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
         accuracy_delta = 0.3
         iter_number = 0
         while accuracy_delta > eps and iter_number < max_rounds:
@@ -119,7 +124,7 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                     r = random.randint(0, 1)
                     if r == 1:
                         o_ind = indexes[0].pop()
-                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
+                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, values=values)
                     else:
                         s_index = indexes[1].pop()
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
@@ -128,12 +133,12 @@ def gibbs_sampl(data, accuracy_data, truth_obj_list):
                         accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
                 elif len(indexes[0])!=0 and len(indexes[1])==0:
                     o_ind = indexes[0].pop()
-                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind)
+                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, values=values)
                 else:
                     round_compl = True
             iter_number += 1
             accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob, values=values)
         dist_list.append(dist_metric)
         iter_number_list.append(iter_number)
     return [np.mean(dist_list), np.mean(iter_number_list)]
