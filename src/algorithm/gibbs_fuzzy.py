@@ -156,58 +156,58 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list, values):
         while accuracy_delta > eps and iter_number < max_rounds:
             indexes = copy.deepcopy(var_index)
             accuracy_prev = copy.copy(accuracy_list)
-            # round_compl = False
-            # while not round_compl:
-            #     if len(indexes[0])!= 0 and len(indexes[1])!= 0:
-            #         r = random.randint(0, 1)
-            #         if r == 1:
-            #             o_ind = indexes[0].pop()
-            #             obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
-            #                          obj_index=o_ind, values=values, obj_values=obj_values, prob=prob)
-            #             new_val = values[obj_prob.index(max(obj_prob))]
-            #             obj_values[o_ind] = new_val
-            #             prob[o_ind] = obj_prob
-            #         else:
-            #             s_index = indexes[1].pop()
-            #             accuracy_s = accuracy_list[s_index]
-            #             accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
-            #                                                   s_index=s_index, values=values, obj_values=obj_values,
-            #                                                   accuracy_s=accuracy_s)
-            #     elif len(indexes[0])==0 and len(indexes[1])!=0:
-            #             s_index = indexes[1].pop()
-            #             accuracy_s = accuracy_list[s_index]
-            #             accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
-            #                                                   s_index=s_index, values=values, obj_values=obj_values,
-            #                                                   accuracy_s=accuracy_s)
-            #     elif len(indexes[0])!=0 and len(indexes[1])==0:
-            #         o_ind = indexes[0].pop()
-            #         obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
-            #                          obj_index=o_ind, values=values, obj_values=obj_values, prob=prob)
-            #         new_val = values[obj_prob.index(max(obj_prob))]
-            #         obj_values[o_ind] = new_val
-            #         prob[o_ind] = obj_prob
-            #     else:
-            #         round_compl = True
-            for o_ind in indexes[0]:
-                 obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
+            round_compl = False
+            while not round_compl:
+                if len(indexes[0])!= 0 and len(indexes[1])!= 0:
+                    r = random.randint(0, 1)
+                    if r == 1:
+                        o_ind = indexes[0].pop()
+                        obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
                                      obj_index=o_ind, values=values, obj_values=obj_values, prob=prob)
-                 new_val = values[obj_prob.index(max(obj_prob))]
-                 obj_values[o_ind] = new_val
-                 prob[o_ind] = obj_prob
-            for s_index in indexes[1]:
-                 accuracy_s = accuracy_list[s_index]
-                 accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
-                                                      s_index=s_index, values=values, obj_values=obj_values,
-                                                      accuracy_s=accuracy_s)
+                        new_val = values[obj_prob.index(max(obj_prob))]
+                        obj_values[o_ind] = new_val
+                        prob[o_ind] = obj_prob
+                    else:
+                        s_index = indexes[1].pop()
+                        accuracy_s = accuracy_list[s_index]
+                        accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
+                                                              s_index=s_index, values=values, obj_values=obj_values,
+                                                              accuracy_s=accuracy_s)
+                elif len(indexes[0])==0 and len(indexes[1])!=0:
+                        s_index = indexes[1].pop()
+                        accuracy_s = accuracy_list[s_index]
+                        accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
+                                                              s_index=s_index, values=values, obj_values=obj_values,
+                                                              accuracy_s=accuracy_s)
+                elif len(indexes[0])!=0 and len(indexes[1])==0:
+                    o_ind = indexes[0].pop()
+                    obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
+                                     obj_index=o_ind, values=values, obj_values=obj_values, prob=prob)
+                    new_val = values[obj_prob.index(max(obj_prob))]
+                    obj_values[o_ind] = new_val
+                    prob[o_ind] = obj_prob
+                else:
+                    round_compl = True
+            # for o_ind in indexes[0]:
+            #      obj_prob = get_prob(data=data, g_data=g_data, accuracy_list=accuracy_list,
+            #                          obj_index=o_ind, values=values, obj_values=obj_values, prob=prob)
+            #      new_val = values[obj_prob.index(max(obj_prob))]
+            #      obj_values[o_ind] = new_val
+            #      prob[o_ind] = obj_prob
+            # for s_index in indexes[1]:
+            #      accuracy_s = accuracy_list[s_index]
+            #      accuracy_list[s_index] = get_accuracy(data=data, g_data=g_data, prob=prob,
+            #                                           s_index=s_index, values=values, obj_values=obj_values,
+            #                                           accuracy_s=accuracy_s)
             iter_number += 1
             accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-            print 'ac_delta: {}'.format(accuracy_delta)
+            # print 'ac_delta: {}'.format(accuracy_delta)
             # print get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob, values=values)
         dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob, values=values)
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
         # print '------'
-        print 'dist: {}'.format(dist_metric)
+        # print 'dist: {}'.format(dist_metric)
     # print 'std: {}'.format(np.std(dist_metric))
     # print dist_list
     return [np.mean(dist_list), np.mean(iter_list)]
@@ -223,7 +223,7 @@ import pandas as pd
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
 from generator.generator import generator
-# from algorithm.gibbs import gibbs_sampl
+from algorithm.gibbs import gibbs_sampl
 from algorithm.gibbs_fuzzy import gibbs_fuzzy
 from algorithm.em import em
 
@@ -250,12 +250,12 @@ gf_t = []
 #     else:
 #         ground_truth.append(0)
 values = range(5)
-for g_true in [0.5, 0.7, 0.8, 0.9, 0.6, 0.5, 0.3, 0.2, 0., 1.0]:
+for g_true in [0., 1.0, 0.2, 0.3, 0.4, 0.5, 0.7, 0.8, 0.9, 1.]:
 
     print g_true
     print '*****'
 
-    for i in range(10):
+    for i in range(5):
         print i
         ground_truth = [random.randint(0, len(values)-1) for i in range(obj_number)]
         data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, values)
@@ -271,8 +271,8 @@ for g_true in [0.5, 0.7, 0.8, 0.9, 0.6, 0.5, 0.3, 0.2, 0., 1.0]:
         while True:
             try:
                 # t_g = time.time()
-                # g_d, g_it = gibbs_sampl(data=data, truth_obj_list=ground_truth, values=values)
-                # print 'g: {}'.format(g_d)
+                g_d, g_it = gibbs_sampl(data=data, truth_obj_list=ground_truth, values=values)
+                print 'g: {}'.format(g_d)
                 # ex_t_g = time.time() - t_g
                 # g_t.append(ex_t_g)
                 # print("--- %s seconds g ---" % (ex_t_g))

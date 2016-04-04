@@ -11,7 +11,7 @@ import copy
 import random
 
 max_rounds = 30
-eps = 0.05
+eps = 0.001
 
 
 def init_prob(data, values):
@@ -91,18 +91,23 @@ def get_dist_metric(prob_gt, prob):
 
 
 def em(data, truth_obj_list, values):
-    prob = init_prob(data=data, values=values)
-    s_number = len(data.S.drop_duplicates())
-    accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    accuracy_delta = 0.3
-    iter_number = 0
-    while accuracy_delta > eps and iter_number < max_rounds:
-        prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list, values=values)
-        accuracy_prev = copy.copy(accuracy_list)
-        accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
-        accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-        iter_number += 1
+    dist_list = []
+    iter_list = []
+    for round in range(10):
+        prob = init_prob(data=data, values=values)
+        s_number = len(data.S.drop_duplicates())
+        accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
+        accuracy_delta = 0.3
+        iter_number = 0
+        while accuracy_delta > eps and iter_number < max_rounds:
+            prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list, values=values)
+            accuracy_prev = copy.copy(accuracy_list)
+            accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
+            accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
+            iter_number += 1
 
-    prob_gt = get_gt_prob(data=data, truth_obj_list=truth_obj_list, values=values)
-    dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
-    return [dist_metric, iter_number]
+        prob_gt = get_gt_prob(data=data, truth_obj_list=truth_obj_list, values=values)
+        dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
+        dist_list.append(dist_metric)
+        iter_list.append(iter_number)
+    return [np.mean(dist_list), np.mean(iter_list)]

@@ -10,7 +10,7 @@ import copy
 import random
 
 max_rounds = 30
-eps = 0.01
+eps = 0.001
 l = 2
 
 
@@ -39,10 +39,17 @@ def get_init_prob(data, values):
 
 
 def get_factor(data, accuracy, v, v_true, n):
-    if v == v_true:
-        factor = accuracy
-    else:
-        factor = (1 - accuracy)/n
+    factor = 0.
+    for accuracy_val in [0, 1]:
+        if accuracy_val:
+            if v == v_true:
+                factor = accuracy
+            else:
+                factor = accuracy/n
+        else:
+            if v != v_true:
+                factor = (1-accuracy)/n
+
     return factor
 
 
