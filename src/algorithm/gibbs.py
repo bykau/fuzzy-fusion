@@ -38,18 +38,17 @@ def get_init_prob(data, values):
     return init_prob
 
 
-def get_factor(data, accuracy, v, v_true, n):
+def get_factor(data, accuracy, a_val, v, v_true, n):
     factor = 0.
-    for accuracy_val in [0, 1]:
-        if accuracy_val:
-            if v == v_true:
-                factor = accuracy
-            else:
-                factor = accuracy/n
-        else:
-            if v != v_true:
-                factor = (1-accuracy)/n
-
+    if a_val:
+        if v == v_true:
+            factor = accuracy
+    else:
+        if v != v_true:
+            factor = (1-accuracy)/n
+    if factor == 0:
+        a_val = 1 - a_val
+        factor = get_factor(data, accuracy, a_val, v, v_true, n)
     return factor
 
 
@@ -59,10 +58,17 @@ def get_prob(data, accuracy_list, obj_index, values):
     n = l - 1
     term_list = [1]*l
     for psi in data[data.O == obj_index].iterrows():
-        accuracy = accuracy_list[psi[1].S]
         v = psi[1].V
+        accuracy = accuracy_list[psi[1].S]
+        if accuracy == 0.5:
+            a_val = random.choice([0, 1])
+        else:
+            if accuracy > 0.5:
+                a_val = 1
+            else:
+                a_val = 0
         for v_ind, v_true in enumerate(values):
-            term_list[v_ind] *= get_factor(data, accuracy, v, v_true, n)
+            term_list[v_ind] *= get_factor(data, accuracy, a_val, v, v_true, n)
     denom = sum(term_list)
     for v_ind in range(l):
         prob.append(term_list[v_ind]/denom)
