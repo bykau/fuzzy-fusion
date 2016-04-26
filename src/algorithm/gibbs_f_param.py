@@ -16,6 +16,7 @@ def get_hparam(m, std):
 
     return [param1, param2]
 
+
 def init_var(data):
     s_ind = sorted(data.S.drop_duplicates())
     obj_index_list = sorted(data.O.drop_duplicates())
@@ -74,9 +75,9 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
     s_in_cluster = list(psi_cl.S.drop_duplicates())
     for v in possible_values:
         counts_v = copy.deepcopy(counts)
-        pr_v = prob[o_ind][v]
+        l_p.append(prob[o_ind][v])
         for s in s_in_cluster:
-            flag = True
+            n_p, n_m = 0, 0
             for psi in psi_cl[psi_cl.S == s].iterrows():
                 psi_ind = psi[0]
                 psi = psi[1]
@@ -85,22 +86,26 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
                     c_new = 1 if psi.V == v else 0
                     if c_new != c_old:
                         counts_v[s].at[psi_ind, 'c'] = c_new
+                    if c_new == 1:
+                        n_p += 1
+                    else:
+                        n_m += 1
                 elif psi.O != o_ind and g_values[psi_ind] == 0:
                     c_new = 1 if psi.V == v else 0
                     if c_new != c_old:
                         counts_v[s].at[psi_ind, 'c'] = c_new
-                else:
-                    flag = False
-            if flag:
+                    if c_new == 1:
+                        n_p += 1
+                    else:
+                        n_m += 1
+            s_counts = [n_m, n_p]
+            if any(s_counts):
                 accuracy = accuracy_list[s]
-                n_true = len(counts_v[s][counts_v[s].c == 1])
-                n_false = len(counts_v[s][counts_v[s].c == 0])
-                pr_v *= accuracy**n_true*(1-accuracy)**n_false
-        l_p.append(pr_v)
+                l_p[v] *= accuracy**n_p*(1-accuracy)**n_m
         l_c.append(counts_v)
     norm_const = sum(l_p)
-    l_p[0] /=norm_const
-    l_p[1] /=norm_const
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
     v_new = np.random.binomial(1, l_p[1], 1)[0]
     counts_new = l_c[v_new]
 
@@ -133,8 +138,8 @@ def get_g(g_ind, g_prev, pi_prob, obj_values, accuracy_list, counts, data):
                     pr_pi *= 1-accuracy
         l_p.append(pr_pi)
     norm_const = sum(l_p)
-    l_p[0] /=norm_const
-    l_p[1] /=norm_const
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
     g_new = np.random.binomial(1, l_p[1], 1)[0]
     if g_new != g_prev:
         if g_new == 1:
@@ -180,6 +185,7 @@ def get_a(s_counts, alpha1, alpha2):
 
     return a_new
 
+
 def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
     val = []
@@ -206,13 +212,12 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
     iter_list = []
     for round in range(10):
         var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list,\
-        alpha1, alpha2, gamma1, gamma2 = init_var(data=data)
+            alpha1, alpha2, gamma1, gamma2 = init_var(data=data)
         iter_number = 0
         dist_metric = 1.
         dist_delta = 0.3
         dist_temp = []
         while dist_delta > eps and iter_number < max_rounds:
-            accuracy_prev = copy.copy(accuracy_list)
             for o_ind in var_index[0]:
                  obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, g_values=g_values,
                                                                 obj_values=obj_values, counts=counts,
@@ -233,7 +238,7 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
             dist_metric_old = dist_metric
             dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
             dist_delta = abs(dist_metric-dist_metric_old)
-            print 'dist: {}'.format(dist_metric)
+            # print 'dist: {}'.format(dist_metric)
             dist_temp.append(dist_metric)
         print iter_number
 
@@ -275,14 +280,8 @@ result_list = []
 em_t = []
 g_t = []
 gf_t = []
-# ground_truth = []
-# for i in range(obj_number):
-#     if i % 2 == 0:
-#         ground_truth.append(c_g.csv)
-#     else:
-#         ground_truth.append(0)
-# possible_values = range(2)
-for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
+
+for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.98]:
 
     print g_true
     print '*****'
@@ -323,4 +322,4 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
                 print 'zero {}'.format(i)
         result_list.append([g_true, em_d, gf_d])
 df = pd.DataFrame(data=result_list, columns=['g_true', 'em', 'gf'])
-df.to_csv('par_1.csv')
+df.to_csv('2_true_param.csv')

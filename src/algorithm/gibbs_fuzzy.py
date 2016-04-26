@@ -16,7 +16,9 @@ def init_var(data):
     obj_index_list = sorted(data.O.drop_duplicates())
     var_index = [obj_index_list, s_ind]
     accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    pi_init = beta.rvs(gamma1, gamma2, size=1)
+    # pi_init = beta.rvs(gamma1, gamma2, size=1)
+    # g_values = np.random.binomial(1, pi_init, len(data))
+    pi_init = random.uniform(0.6, 1)
     g_values = np.random.binomial(1, pi_init, len(data))
     obj_values = [random.choice(possible_values) for i in range(len(ground_truth))]
     pi_prob = [0.5]*(len(obj_index_list)/2)
@@ -68,9 +70,10 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
     s_in_cluster = list(psi_cl.S.drop_duplicates())
     for v in possible_values:
         counts_v = copy.deepcopy(counts)
-        pr_v = prob[o_ind][v]
+        l_p.append(prob[o_ind][v])
         for s in s_in_cluster:
-            flag = True
+            n_p, n_m = 0, 0
+            # flag = True
             for psi in psi_cl[psi_cl.S == s].iterrows():
                 psi_ind = psi[0]
                 psi = psi[1]
@@ -79,22 +82,36 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
                     c_new = 1 if psi.V == v else 0
                     if c_new != c_old:
                         counts_v[s].at[psi_ind, 'c'] = c_new
+
+                    if c_new == 1:
+                        n_p += 1
+                    else:
+                        n_m += 1
                 elif psi.O != o_ind and g_values[psi_ind] == 0:
                     c_new = 1 if psi.V == v else 0
                     if c_new != c_old:
                         counts_v[s].at[psi_ind, 'c'] = c_new
-                else:
-                    flag = False
-            if flag:
+
+                    if c_new == 1:
+                        n_p += 1
+                    else:
+                        n_m += 1
+                # else:
+                #     flag = False
+            # if flag:
+            #     accuracy = accuracy_list[s]
+            #     n_true = len(counts_v[s][counts_v[s].c == 1])
+            #     n_false = len(counts_v[s][counts_v[s].c == 0])
+            #     pr_v *= accuracy**n_true*(1-accuracy)**n_false
+            s_counts = [n_m, n_p]
+            if any(s_counts):
                 accuracy = accuracy_list[s]
-                n_true = len(counts_v[s][counts_v[s].c == 1])
-                n_false = len(counts_v[s][counts_v[s].c == 0])
-                pr_v *= accuracy**n_true*(1-accuracy)**n_false
-        l_p.append(pr_v)
+                l_p[v] *= accuracy**n_p*(1-accuracy)**n_m
+        # l_p.append(pr_v)
         l_c.append(counts_v)
     norm_const = sum(l_p)
-    l_p[0] /=norm_const
-    l_p[1] /=norm_const
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
     v_new = np.random.binomial(1, l_p[1], 1)[0]
     counts_new = l_c[v_new]
 
@@ -165,6 +182,7 @@ def get_pi(cl_ind, g_values, data):
     pi_new = beta.rvs(count_p + gamma1, count_m + gamma2, size=1)
 
     return pi_new
+
 
 def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
@@ -282,7 +300,7 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
 
         # ex_t_em = time.time() - t_em
         # em_t.append(ex_t_em)
-#         print("--- %s seconds em ---" % (ex_t_em))
+        # print("--- %s seconds em ---" % (ex_t_em))
 
         while True:
             try:
@@ -297,14 +315,14 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
                 gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
                                           truth_obj_list=ground_truth)
                 print 'gf: {}'.format(gf_d)
-                # print gf_it
+                print gf_it
                 print '---'
                 # ex_t_gf = time.time() - t_gf
                 # gf_t.append(ex_t_gf)
-#                 print("--- %s seconds gf ---" % (ex_t_gf))
+                # print("--- %s seconds gf ---" % (ex_t_gf))
                 break
             except ZeroDivisionError:
                 print 'zero {}'.format(i)
         result_list.append([g_true, em_d, gf_d])
 df = pd.DataFrame(data=result_list, columns=['g_true', 'em', 'gf'])
-df.to_csv('2.csv')
+df.to_csv('1_uniform_par.csv')
