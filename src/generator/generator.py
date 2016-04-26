@@ -6,11 +6,10 @@ import copy
 def generator(cov_list, p_list, ground_truth, claster_size, g_true, values):
     number_of_obj = len(ground_truth)
     source_number = len(p_list)
-    if claster_size-1 != 0:
-        g = (1.-g_true)/(claster_size-1)
-    data = []
-
     while True:
+        data = []
+        if claster_size-1 != 0:
+            g = (1.-g_true)/(claster_size-1)
         for s in range(source_number):
             p_s = p_list[s]
             cov_s = cov_list[s]
