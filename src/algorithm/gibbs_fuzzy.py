@@ -7,23 +7,20 @@ max_rounds = 300
 eps = 10e-5
 possible_values = [0, 1]
 alpha1, alpha2 = 1, 1
-beta1, beta2 = 10, 10
+beta1, beta2 = 1, 1
 gamma1, gamma2 = 1, 1
 
 
 def init_var(data):
     s_ind = sorted(data.S.drop_duplicates())
+    s_number = len(s_ind)
     obj_index_list = sorted(data.O.drop_duplicates())
     var_index = [obj_index_list, s_ind]
     accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    # pi_init = beta.rvs(gamma1, gamma2, size=1)
-    # g_values = np.random.binomial(1, pi_init, len(data))
     pi_init = random.uniform(0.6, 1)
     g_values = np.random.binomial(1, pi_init, len(data))
-    obj_values = [random.choice(possible_values) for i in range(len(ground_truth))]
+    obj_values = [random.choice(possible_values) for i in range(len(obj_index_list))]
     pi_prob = [0.5]*(len(obj_index_list)/2)
-    # random.shuffle(obj_index_list)
-    # random.shuffle(accuracy_ind)
 
     init_prob = []
     l = len(possible_values)
@@ -73,7 +70,6 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
         l_p.append(prob[o_ind][v])
         for s in s_in_cluster:
             n_p, n_m = 0, 0
-            # flag = True
             for psi in psi_cl[psi_cl.S == s].iterrows():
                 psi_ind = psi[0]
                 psi = psi[1]
@@ -96,13 +92,6 @@ def get_o(o_ind, g_values, obj_values, counts, data, prob, accuracy_list):
                         n_p += 1
                     else:
                         n_m += 1
-                # else:
-                #     flag = False
-            # if flag:
-            #     accuracy = accuracy_list[s]
-            #     n_true = len(counts_v[s][counts_v[s].c == 1])
-            #     n_false = len(counts_v[s][counts_v[s].c == 0])
-            #     pr_v *= accuracy**n_true*(1-accuracy)**n_false
             s_counts = [n_m, n_p]
             if any(s_counts):
                 accuracy = accuracy_list[s]
@@ -144,8 +133,8 @@ def get_g(g_ind, g_prev, pi_prob, obj_values, accuracy_list, counts, data):
                     pr_pi *= 1-accuracy
         l_p.append(pr_pi)
     norm_const = sum(l_p)
-    l_p[0] /=norm_const
-    l_p[1] /=norm_const
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
     g_new = np.random.binomial(1, l_p[1], 1)[0]
     if g_new != g_prev:
         if g_new == 1:
@@ -184,6 +173,14 @@ def get_pi(cl_ind, g_values, data):
     return pi_new
 
 
+def get_a(s_counts):
+    count_p = len(s_counts[s_counts.c == 1])
+    count_m = len(s_counts[s_counts.c == 0])
+    a_new = beta.rvs(count_p + alpha1, count_m + alpha2, size=1)
+
+    return a_new
+
+
 def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
     val = []
@@ -205,14 +202,6 @@ def get_dist_metric(data, truth_obj_list, prob):
     return dist_metric_norm
 
 
-def get_a(s_counts):
-    count_p = len(s_counts[s_counts.c == 1])
-    count_m = len(s_counts[s_counts.c == 0])
-    a_new = beta.rvs(count_p + alpha1, count_m + alpha2, size=1)
-
-    return a_new
-
-
 def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
     dist_list = []
     iter_list = []
@@ -224,9 +213,9 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
         dist_temp = []
         while dist_delta > eps and iter_number < max_rounds:
             for o_ind in var_index[0]:
-                 obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, g_values=g_values,
-                                                                obj_values=obj_values, counts=counts,
-                                                                data=data, prob=prob, accuracy_list=accuracy_list)
+                obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, g_values=g_values,
+                                                               obj_values=obj_values, counts=counts,
+                                                               data=data, prob=prob, accuracy_list=accuracy_list)
 
             for g_ind in range(len(g_values)):
                 g_prev = g_values[g_ind]
@@ -243,9 +232,7 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
             dist_metric_old = dist_metric
             dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
             dist_delta = abs(dist_metric-dist_metric_old)
-            # print 'dist: {}'.format(dist_metric)
             dist_temp.append(dist_metric)
-        # print iter_number
 
         dist_metric = np.mean(dist_temp[-5:])
         dist_list.append(dist_metric)
@@ -258,7 +245,8 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
 
 
 
-
+# temporary
+#
 import sys
 import time
 import pandas as pd
