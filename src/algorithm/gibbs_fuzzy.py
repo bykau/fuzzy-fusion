@@ -7,7 +7,7 @@ max_rounds = 300
 eps = 10e-5
 possible_values = [0, 1]
 alpha1, alpha2 = 1, 1
-beta1, beta2 = 1, 1
+beta1, beta2 = 10, 10
 gamma1, gamma2 = 1, 1
 
 
@@ -245,13 +245,13 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
             dist_delta = abs(dist_metric-dist_metric_old)
             # print 'dist: {}'.format(dist_metric)
             dist_temp.append(dist_metric)
-        print iter_number
+        # print iter_number
 
         dist_metric = np.mean(dist_temp[-5:])
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
-        print 'dist: {}'.format(dist_metric)
-        print '------'
+        # print 'dist: {}'.format(dist_metric)
+        # print '------'
     return [np.mean(dist_list), np.mean(iter_list)]
 
 
@@ -267,6 +267,7 @@ sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fus
 from generator.generator import generator
 from algorithm.gibbs import gibbs_sampl
 from algorithm.em import em
+from algorithm.m_voting import m_voting
 
 print 'Python version ' + sys.version
 print 'Pandas version ' + pd.__version__
@@ -284,7 +285,7 @@ result_list = []
 em_t = []
 g_t = []
 gf_t = []
-for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
+for g_true in [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
 
     print g_true
     print '*****'
@@ -293,6 +294,10 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
         print i
         ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
         data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, possible_values)
+
+        m_v = m_voting(data=data, truth_obj_list=ground_truth)
+        print 'm_v: {}'.format(m_v)
+
 
         # t_em = time.time()
         em_d, em_it = em(data=data, truth_obj_list=ground_truth, values=possible_values)
@@ -315,7 +320,7 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
                 gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
                                           truth_obj_list=ground_truth)
                 print 'gf: {}'.format(gf_d)
-                print gf_it
+                # print gf_it
                 print '---'
                 # ex_t_gf = time.time() - t_gf
                 # gf_t.append(ex_t_gf)
@@ -323,6 +328,6 @@ for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
                 break
             except ZeroDivisionError:
                 print 'zero {}'.format(i)
-        result_list.append([g_true, em_d, gf_d])
-df = pd.DataFrame(data=result_list, columns=['g_true', 'em', 'gf'])
-df.to_csv('1_uniform_par.csv')
+        result_list.append([g_true, m_v, em_d, gf_d])
+df = pd.DataFrame(data=result_list, columns=['g_true', 'mv', 'em', 'gf'])
+df.to_csv('10.csv')

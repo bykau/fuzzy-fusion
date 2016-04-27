@@ -255,71 +255,75 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
 
 
 
-import sys
-import time
-import pandas as pd
-# sys.path.append('/home/evgeny/fuzzy-fusion/src/')
-sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
-from generator.generator import generator
-from algorithm.gibbs import gibbs_sampl
-from algorithm.em import em
-
-print 'Python version ' + sys.version
-print 'Pandas version ' + pd.__version__
-
-s_number = 5
-obj_number = 20
-cl_size = 2
-cov_list = [0.7]*s_number
-p_list = [0.7]*s_number
-accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-accuracy_for_df = [[i, accuracy_list[i]] for i in range(s_number)]
-accuracy_data = pd.DataFrame(accuracy_for_df, columns=['S', 'A'])
-
-result_list = []
-em_t = []
-g_t = []
-gf_t = []
-
-for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.98]:
-
-    print g_true
-    print '*****'
-
-    for i in range(10):
-        print i
-        ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
-        data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, possible_values)
-
-        # t_em = time.time()
-        em_d, em_it = em(data=data, truth_obj_list=ground_truth, values=possible_values)
-        print 'em: {}'.format(em_d)
-
-        # ex_t_em = time.time() - t_em
-        # em_t.append(ex_t_em)
-#         print("--- %s seconds em ---" % (ex_t_em))
-
-        while True:
-            try:
-                # t_g = time.time()
-                # g_d, g_it = gibbs_sampl(data=data, truth_obj_list=ground_truth, values=possible_values)
-                # print 'g: {}'.format(g_d)
-                # ex_t_g = time.time() - t_g
-                # g_t.append(ex_t_g)
-                # print("--- %s seconds g ---" % (ex_t_g))
-
-                # t_gf = time.time()
-                gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
-                                          truth_obj_list=ground_truth)
-                print 'gf: {}'.format(gf_d)
-                # print gf_it
-                print '---'
-                # ex_t_gf = time.time() - t_gf
-                # gf_t.append(ex_t_gf)
-#                 print("--- %s seconds gf ---" % (ex_t_gf))
-                break
-            except ZeroDivisionError:
-                print 'zero {}'.format(i)
-        result_list.append([g_true, em_d, gf_d])
-df = pd.DataFrame(data=result_list, columns=['g_true', 'em', 'gf'])
-df.to_csv('2_true_param.csv')
+# import sys
+# import time
+# import pandas as pd
+# # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
+# sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
+# from generator.generator import generator
+# from algorithm.gibbs import gibbs_sampl
+# from algorithm.em import em
+# from algorithm.m_voting import m_voting
+#
+# print 'Python version ' + sys.version
+# print 'Pandas version ' + pd.__version__
+#
+# s_number = 5
+# obj_number = 20
+# cl_size = 2
+# cov_list = [0.7]*s_number
+# p_list = [0.7]*s_number
+# accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
+# accuracy_for_df = [[i, accuracy_list[i]] for i in range(s_number)]
+# accuracy_data = pd.DataFrame(accuracy_for_df, columns=['S', 'A'])
+#
+# result_list = []
+# em_t = []
+# g_t = []
+# gf_t = []
+#
+# for g_true in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.98]:
+#
+#     print g_true
+#     print '*****'
+#
+#     for i in range(10):
+#         print i
+#         ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
+#         data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, possible_values)
+#
+#         # m_v = m_voting(data=data, truth_obj_list=ground_truth)
+#
+#
+#         # t_em = time.time()
+#         em_d, em_it = em(data=data, truth_obj_list=ground_truth, values=possible_values)
+#         print 'em: {}'.format(em_d)
+#
+#         # ex_t_em = time.time() - t_em
+#         # em_t.append(ex_t_em)
+# #         print("--- %s seconds em ---" % (ex_t_em))
+#
+#         while True:
+#             try:
+#                 # t_g = time.time()
+#                 # g_d, g_it = gibbs_sampl(data=data, truth_obj_list=ground_truth, values=possible_values)
+#                 # print 'g: {}'.format(g_d)
+#                 # ex_t_g = time.time() - t_g
+#                 # g_t.append(ex_t_g)
+#                 # print("--- %s seconds g ---" % (ex_t_g))
+#
+#                 # t_gf = time.time()
+#                 gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
+#                                           truth_obj_list=ground_truth)
+#                 print 'gf: {}'.format(gf_d)
+#                 # print gf_it
+#                 print '---'
+#                 # ex_t_gf = time.time() - t_gf
+#                 # gf_t.append(ex_t_gf)
+# #                 print("--- %s seconds gf ---" % (ex_t_gf))
+#                 break
+#             except ZeroDivisionError:
+#                 print 'zero {}'.format(i)
+#         result_list.append([g_true, em_d, gf_d])
+# df = pd.DataFrame(data=result_list, columns=['g_true', 'em', 'gf'])
+# df.to_csv('2_true_param.csv')
