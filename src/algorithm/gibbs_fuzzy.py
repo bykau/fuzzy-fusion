@@ -17,10 +17,10 @@ def init_var(data):
     obj_index_list = sorted(data.O.drop_duplicates())
     var_index = [obj_index_list, s_ind]
     accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    pi_init = random.uniform(0.6, 1)
+    pi_init = random.uniform(0.7, 1)
     g_values = np.random.binomial(1, pi_init, len(data))
     obj_values = [random.choice(possible_values) for i in range(len(obj_index_list))]
-    pi_prob = [0.5]*(len(obj_index_list)/2)
+    pi_prob = [pi_init]*(len(obj_index_list)/2)
 
     init_prob = []
     l = len(possible_values)
@@ -273,7 +273,7 @@ result_list = []
 em_t = []
 g_t = []
 gf_t = []
-for g_true in [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
+for g_true in [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7]:
 
     print g_true
     print '*****'
