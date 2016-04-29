@@ -66,7 +66,7 @@ def e_step(data, accuracy_list, pi_list, cl_list):
                     pr_item *= accuracy if psi.V == cl_set[obj_ind % 2] else 1 - accuracy
                 pr *= pr_item
             cl_set_list[set_ind] = cl_set_list[set_ind] + (pr,)
-        columns = cl_obj + list(psi_cl.index) + ['P']
+        columns = ['O0_v', 'O1_v'] + list(psi_cl.index) + ['P']
         cl_table = pd.DataFrame(data=cl_set_list, columns=columns)
         cl_table.iloc[:, -1] = cl_table.iloc[:, -1].div(sum(cl_table.iloc[:, -1]))
         cluster_tables.append(cl_table)
@@ -74,11 +74,46 @@ def e_step(data, accuracy_list, pi_list, cl_list):
     return cluster_tables
 
 
+def m_step(data, cluster_tables, s_number, cl_list):
+    accuracy_list_new = []
+    for s in range(s_number):
+        s_data = data[data.S == s]
+        accuracy = 0.
+        for psi in s_data.iterrows():
+            g_ind = psi[0]
+            psi = psi[1]
+            cl_ind = psi.O / 2
+            t = cluster_tables[cl_ind]
+            if psi.O % 2 == 0:
+                obj_g1_ind = 'O0_v'
+                obj_g0_ind = 'O1_v'
+            else:
+                obj_g1_ind = 'O1_v'
+                obj_g0_ind = 'O0_v'
+            prob = sum(t[((t[g_ind] == 1) & (t[obj_g1_ind] == psi.V)) | ((t[g_ind] == 0) & (t[obj_g0_ind] == psi.V))].P)
+            accuracy += prob
+        accuracy /= len(s_data)
+        accuracy_list_new.append(accuracy)
+
+    pi_list_new = []
+    for cl_ind in cl_list:
+        cl_obj = [cl_ind*2, cl_ind*2 + 1]
+        g_ind_list = data[data.O.isin(cl_obj)].index
+        t = cluster_tables[cl_ind]
+        pi = 0.
+        for g_ind in g_ind_list:
+            pi += sum(t[t[g_ind] == 1].P)
+        pi /= len(g_ind_list)
+        pi_list_new.append(pi)
+
+    return [accuracy_list_new, pi_list_new]
+
 
 def em_fuzzy(data, truth_obj_list):
     prob, accuracy_list, cl_list, pi_list = init_var(data=data)
 
     cluster_tables = e_step(data=data, accuracy_list=accuracy_list, pi_list=pi_list, cl_list=cl_list)
+    accuracy_list, pi_list = m_step(data=data, cluster_tables=cluster_tables, s_number=s_number, cl_list=cl_list)
 
     dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
 
