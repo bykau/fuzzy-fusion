@@ -66,7 +66,8 @@ def e_step(data, accuracy_list, pi_list, cl_list):
                     pr_item *= accuracy if psi.V == cl_set[obj_ind % 2] else 1 - accuracy
                 pr *= pr_item
             cl_set_list[set_ind] = cl_set_list[set_ind] + (pr,)
-        cl_table = pd.DataFrame(data=cl_set_list)
+        columns = cl_obj + list(psi_cl.index) + ['P']
+        cl_table = pd.DataFrame(data=cl_set_list, columns=columns)
         cl_table.iloc[:, -1] = cl_table.iloc[:, -1].div(sum(cl_table.iloc[:, -1]))
         cluster_tables.append(cl_table)
 
@@ -77,7 +78,8 @@ def e_step(data, accuracy_list, pi_list, cl_list):
 def em_fuzzy(data, truth_obj_list):
     prob, accuracy_list, cl_list, pi_list = init_var(data=data)
 
-    e_step(data, accuracy_list, pi_list, cl_list)
+    cluster_tables = e_step(data=data, accuracy_list=accuracy_list, pi_list=pi_list, cl_list=cl_list)
+
     dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
 
 
@@ -106,8 +108,8 @@ from algorithm.m_voting import m_voting
 print 'Python version ' + sys.version
 print 'Pandas version ' + pd.__version__
 
-s_number = 5
-obj_number = 20
+s_number = 2
+obj_number = 6
 cl_size = 2
 cov_list = [0.7]*s_number
 p_list = [0.7]*s_number
