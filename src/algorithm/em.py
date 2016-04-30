@@ -7,11 +7,12 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 '''
 
 import numpy as np
+import pandas as pd
 import copy
 import random
 
-max_rounds = 30
-eps = 0.001
+max_rounds = 100
+eps = 10e-5
 
 
 def init_prob(data, values):
@@ -93,7 +94,8 @@ def get_dist_metric(prob_gt, prob):
 def em(data, truth_obj_list, values):
     dist_list = []
     iter_list = []
-    for round in range(10):
+    accuracy_all = []
+    for round in range(5):
         prob = init_prob(data=data, values=values)
         s_number = len(data.S.drop_duplicates())
         accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
@@ -110,4 +112,11 @@ def em(data, truth_obj_list, values):
         dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
-    return [np.mean(dist_list), np.mean(iter_list)]
+        accuracy_all.append(accuracy_list)
+
+    accuracy_mean = []
+    accuracy_df = pd.DataFrame(data=accuracy_all)
+    for s in range(len(accuracy_list)):
+        accuracy_mean.append(np.mean(accuracy_df[s]))
+
+    return [np.mean(dist_list), np.mean(iter_list), accuracy_mean]

@@ -1,10 +1,12 @@
 import numpy as np
+import pandas as pd
 import random
+import copy
 import itertools
 
 
-max_rounds = 30
-eps = 0.001
+max_rounds = 100
+eps = 10e-5
 possible_values = [0, 1]
 
 
@@ -109,98 +111,48 @@ def m_step(data, cluster_tables, s_number, cl_list):
     return [accuracy_list_new, pi_list_new]
 
 
+def get_prob(cluster_tables):
+    prob = []
+    for cl_ind, t in enumerate(cluster_tables):
+        prob.append([sum(t[t['O0_v'] == 0].P), sum(t[t['O0_v'] == 1].P)])
+        prob.append([sum(t[t['O1_v'] == 0].P), sum(t[t['O1_v'] == 1].P)])
+
+    return prob
+
+
 def em_fuzzy(data, truth_obj_list):
-    prob, accuracy_list, cl_list, pi_list = init_var(data=data)
+    dist_list = []
+    iter_list = []
+    pi_prob_all = []
+    accuracy_all = []
+    for round in range(5):
+        prob, accuracy_list, cl_list, pi_list = init_var(data=data)
+        s_number = len(data.S.drop_duplicates())
+        accuracy_delta = 0.3
+        iter_number = 0
+        while accuracy_delta > eps and iter_number < max_rounds:
+            cluster_tables = e_step(data=data, accuracy_list=accuracy_list,
+                                    pi_list=pi_list, cl_list=cl_list)
+            accuracy_prev = copy.copy(accuracy_list)
+            accuracy_list, pi_list = m_step(data=data, cluster_tables=cluster_tables,
+                                            s_number=s_number, cl_list=cl_list)
+            accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
+            iter_number += 1
 
-    cluster_tables = e_step(data=data, accuracy_list=accuracy_list, pi_list=pi_list, cl_list=cl_list)
-    accuracy_list, pi_list = m_step(data=data, cluster_tables=cluster_tables, s_number=s_number, cl_list=cl_list)
+        prob = get_prob(cluster_tables=cluster_tables)
+        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+        dist_list.append(dist_metric)
+        iter_list.append(iter_number)
+        accuracy_all.append(accuracy_list)
+        pi_prob_all.append(pi_list)
 
-    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+    accuracy_mean = []
+    accuracy_df = pd.DataFrame(data=accuracy_all)
+    for s in range(len(accuracy_list)):
+        accuracy_mean.append(np.mean(accuracy_df[s]))
+    pi_df = pd.DataFrame(data=pi_prob_all)
+    pi_mean = []
+    for pi in range(len(pi_list)):
+        pi_mean.append(np.mean(pi_df[pi]))
 
-
-
-
-
-
-
-
-
-
-
-
-# temporary
-#
-import sys
-import time
-import pandas as pd
-# sys.path.append('/home/evgeny/fuzzy-fusion/src/')
-sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
-from generator.generator import generator
-from algorithm.gibbs import gibbs_sampl
-from algorithm.em import em
-from algorithm.m_voting import m_voting
-
-print 'Python version ' + sys.version
-print 'Pandas version ' + pd.__version__
-
-s_number = 2
-obj_number = 6
-cl_size = 2
-cov_list = [0.7]*s_number
-p_list = [0.7]*s_number
-accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-accuracy_for_df = [[i, accuracy_list[i]] for i in range(s_number)]
-accuracy_data = pd.DataFrame(accuracy_for_df, columns=['S', 'A'])
-
-result_list = []
-em_t = []
-g_t = []
-gf_t = []
-for g_true in [0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]:
-
-    print g_true
-    print '*****'
-
-    for i in range(10):
-        print i
-        ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
-        data, g_data = generator(cov_list, p_list, ground_truth, cl_size, g_true, possible_values)
-
-        m_v = m_voting(data=data, truth_obj_list=ground_truth)
-        print 'm_v: {}'.format(m_v)
-
-
-        # t_em = time.time()
-        # em_d, em_it = em(data=data, truth_obj_list=ground_truth, values=possible_values)
-        # print 'em: {}'.format(em_d)
-
-        # ex_t_em = time.time() - t_em
-        # em_t.append(ex_t_em)
-        # print("--- %s seconds em ---" % (ex_t_em))
-
-        em_f, em_f_it = em_fuzzy(data=data, truth_obj_list=ground_truth)
-
-        while True:
-            try:
-                # t_g = time.time()
-                # g_d, g_it = gibbs_sampl(data=data, truth_obj_list=ground_truth, values=possible_values)
-                # print 'g: {}'.format(g_d)
-                # ex_t_g = time.time() - t_g
-                # g_t.append(ex_t_g)
-                # print("--- %s seconds g ---" % (ex_t_g))
-
-                # t_gf = time.time()
-                # gf_d, gf_it = gibbs_fuzzy(data=data, accuracy_data=accuracy_data, g_data=g_data,
-                #                           truth_obj_list=ground_truth)
-                # print 'gf: {}'.format(gf_d)
-                # print gf_it
-                # print '---'
-                # ex_t_gf = time.time() - t_gf
-                # gf_t.append(ex_t_gf)
-                # print("--- %s seconds gf ---" % (ex_t_gf))
-                break
-            except ZeroDivisionError:
-                print 'zero {}'.format(i)
-        result_list.append([g_true, m_v, em_d, gf_d])
-df = pd.DataFrame(data=result_list, columns=['g_true', 'mv', 'em', 'gf'])
-df.to_csv('10.csv')
+    return [np.mean(dist_list), np.mean(iter_list), accuracy_mean, pi_mean]
