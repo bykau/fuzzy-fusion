@@ -5,20 +5,22 @@ import pandas as pd
 import numpy as np
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
+sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
 from algorithm.gibbs_fuzzy import gibbs_fuzzy
 from algorithm.gibbs import gibbs
 from algorithm.em import em
 from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
+from restaurants.restaurants import get_rest_data
 
 
-s_number = 5
-obj_number = 20
+s_number = 10
+obj_number = 100
 cl_size = 2
 possible_values = [0, 1]
 cov_list = [0.7]*s_number
-p_list = [0.8]*s_number
+p_list = [1]*s_number
 
 
 def get_dist(gt, output):
@@ -28,19 +30,19 @@ def get_dist(gt, output):
     return dist_metric_norm
 
 
-if __name__ == '__main__':
+def s_data_run():
     result_list = []
     result_params_list = []
     em_t = []
     g_t = []
     gf_t = []
     ground_truth = [0, 1]*(obj_number/2)
-    for pi in [1., 0.95, 0.9, 0.85, 0.8, 0.75, 0.7]:# 0.65, 0.6, 0.55, 0.5]:
+    for pi in [0.9, 0.85, 0.8, 0.75, 0.7]:# 0.65, 0.6, 0.55, 0.5]:
 
         print 'pi: {}'.format(pi)
         print '*****'
 
-        for round in range(5):
+        for round in range(2):
             print round
 
             # ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
@@ -85,3 +87,24 @@ if __name__ == '__main__':
     df_data = pd.DataFrame(data=result_list, columns=['pi', 'mv', 'em', 'g', 'g_f'])# 'em_f', 'gf'])
     df_data.to_csv('output_data.csv')
     # df_param.to_csv('output_param.csv')
+
+
+def rest_data_run():
+    data, ground_truth = get_rest_data()
+    m_v = m_voting(data=data, truth_obj_list=ground_truth)
+    print 'm_v: {}'.format(m_v)
+    em_d, em_it, accuracy_em = em(data=data, truth_obj_list=ground_truth, values=possible_values)
+    print 'em: {}'.format(em_d)
+    g_d, g_it, accuracy_g = gibbs(data=data, truth_obj_list=ground_truth)
+    print 'g: {}'.format(g_d)
+    gf_d, gf_it, accuracy_gf, pi_gf = gibbs_fuzzy(data=data, truth_obj_list=ground_truth)
+    print 'gf: {}'.format(gf_d)
+    em_f, em_f_it, accuracy_em_f, pi_em_f = em_fuzzy(data=data, truth_obj_list=ground_truth)
+    print 'em_f: {}'.format(em_f)
+    print '---'
+
+
+if __name__ == '__main__':
+    # s_data_run()
+    rest_data_run()
+

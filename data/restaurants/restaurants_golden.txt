@@ -71,7 +71,6 @@ brasserie 52	N
 bread	Y
 breakfast at four seasons hotel new york	N
 brick lane curry house	Y
-bricklane curry house	Y
 bright food shop	N
 brio	Y
 broncas	N
