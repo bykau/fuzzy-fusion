@@ -5,7 +5,6 @@ from scipy.stats import beta
 import pandas as pd
 
 max_rounds = 30
-eps = 10e-5
 possible_values = [0, 1]
 alpha1, alpha2 = 1, 1
 beta1, beta2 = 1, 1
@@ -204,12 +203,12 @@ def get_dist_metric(data, truth_obj_list, prob):
     return dist_metric_norm
 
 
-def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
+def gibbs_fuzzy(data, truth_obj_list):
     dist_list = []
     iter_list = []
     pi_prob_all = []
     accuracy_all = []
-    for round in range(10):
+    for round in range(5):
         var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list = init_var(data=data)
         iter_number = 0
         dist_temp = []
@@ -227,7 +226,7 @@ def gibbs_fuzzy(data, accuracy_data, g_data, truth_obj_list):
             for cl_ind in range(len(pi_prob)):
                 pi_prob[cl_ind] = get_pi(cl_ind=cl_ind, g_values=g_values, data=data)
 
-            for s_ind in range(len(accuracy_list)):
+            for s_ind in var_index[1]:
                 s_counts = counts[s_ind]
                 accuracy_list[s_ind] = get_a(s_counts=s_counts)
             iter_number += 1

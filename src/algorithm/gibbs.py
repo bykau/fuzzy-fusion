@@ -6,93 +6,85 @@ Gibbs sampling truth finder
 
 
 import numpy as np
+import pandas as pd
+from scipy.stats import beta
 import copy
 import random
 
 max_rounds = 30
-eps = 0.001
-l = 2
+possible_values = [0, 1]
+alpha1, alpha2 = 1, 1
+l = len(possible_values)
 
 
 def init_var(data):
-    observ_val = []
-    accuracy_ind = sorted(data.S.drop_duplicates())
-    s_number = len(accuracy_ind)
+    s_ind = sorted(data.S.drop_duplicates())
+    s_number = len(s_ind)
+    obj_index_list = sorted(data.O.drop_duplicates())
+    var_index = [obj_index_list, s_ind]
     accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    obj_index_list = sorted(data.O.drop_duplicates())
-    for obj_index in obj_index_list:
-        possible_values = sorted(list(set(data[data.O == obj_index].V)))
-        observ_val.append(possible_values)
-    random.shuffle(obj_index_list)
-    random.shuffle(accuracy_ind)
-    var_index = [obj_index_list, accuracy_ind]
-    return [observ_val, var_index, accuracy_list, s_number]
+    obj_values = [random.choice(possible_values) for i in range(len(obj_index_list))]
 
-
-def get_init_prob(data, values):
     init_prob = []
-    l = len(values)
-    obj_index_list = sorted(data.O.drop_duplicates())
+    counts_list = []
     for obj_index in obj_index_list:
         init_prob.append([1./l]*l)
-    return init_prob
-
-
-def get_factor(data, accuracy, a_val, v, v_true, n):
-    factor = 0.
-    if a_val:
-        if v == v_true:
-            factor = accuracy
-    else:
-        if v != v_true:
-            factor = (1-accuracy)/n
-    if factor == 0:
-        a_val = 1 - a_val
-        factor = get_factor(data, accuracy, a_val, v, v_true, n)
-    return factor
-
-
-def get_prob(data, accuracy_list, obj_index, values):
-    prob = []
-    l = len(values)
-    n = l - 1
-    term_list = [1]*l
-    for psi in data[data.O == obj_index].iterrows():
-        v = psi[1].V
-        accuracy = accuracy_list[psi[1].S]
-        if accuracy == 0.5:
-            a_val = random.choice([0, 1])
-        else:
-            if accuracy > 0.5:
-                a_val = 1
-            else:
-                a_val = 0
-        for v_ind, v_true in enumerate(values):
-            term_list[v_ind] *= get_factor(data, accuracy, a_val, v, v_true, n)
-    denom = sum(term_list)
-    for v_ind in range(l):
-        prob.append(term_list[v_ind]/denom)
-    return prob
-
-
-def get_accuracy(data, prob, s_index):
-    p_sum = 0.
-    size = 0.
-    for psi in data[data.S == s_index].iterrows():
+    for psi in data.iterrows():
         psi = psi[1]
-        observed_val = psi.V
-        p_sum += prob[psi.O][observed_val]
-        size += 1
-    accuracy = p_sum/size
-    return accuracy
+        if psi.V == obj_values[psi.O]:
+            counts_list.append(1)
+        else:
+            counts_list.append(0)
+    counts = pd.DataFrame(counts_list, columns=['c'])
+
+    return [var_index, obj_values, counts, init_prob, accuracy_list]
 
 
-def get_dist_metric(data, truth_obj_list, prob, values):
+def get_o(o_ind, obj_values, counts, data, prob, accuracy_list):
+    l_p = []
+    l_c = []
+    for v in possible_values:
+        pr = prob[o_ind][v]
+        counts_v = copy.deepcopy(counts)
+        psi_obj = data[data.O == o_ind]
+        for psi in psi_obj.iterrows():
+            psi_ind = psi[0]
+            psi = psi[1]
+            if psi.V == v:
+                pr *= accuracy_list[psi.S]
+                c_new = 1
+            else:
+                pr *= 1 - accuracy_list[psi.S]
+                c_new = 0
+
+            c_old = counts_v.at[psi_ind, 'c']
+            if c_new != c_old:
+                counts_v.at[psi_ind, 'c'] = c_new
+        l_p.append(pr)
+        l_c.append(counts_v)
+    norm_const = sum(l_p)
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
+    v_new = np.random.binomial(1, l_p[1], 1)[0]
+    counts_new = l_c[v_new]
+
+    return [v_new, counts_new, l_p]
+
+
+def get_a(s_psi, counts):
+    s_counts = counts.loc[s_psi]
+    count_p = len(s_counts[s_counts.c == 1])
+    count_m = len(s_counts[s_counts.c == 0])
+    a_new = beta.rvs(count_p + alpha1, count_m + alpha2, size=1)[0]
+
+    return a_new
+
+
+def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
     val = []
-    l = len(values)
     for obj_index in range(len(data.O.drop_duplicates())):
-        val.append(values)
+        val.append(possible_values)
         prob_gt.append([0]*l)
     for obj_ind, v_true in enumerate(truth_obj_list):
         for v_ind, v in enumerate(val[obj_ind]):
@@ -105,50 +97,40 @@ def get_dist_metric(data, truth_obj_list, prob, values):
         prob_vector += prob[i]
     dist_metric = np.dot(prob_gt_vector, prob_vector)
     dist_metric_norm = dist_metric/len(prob_gt)
+
     return dist_metric_norm
 
 
-def run_float(scalar, vector_size):
-    random_vector = [random.random() for i in range(vector_size)]
-    random_vector_sum = sum(random_vector)
-    random_vector = [scalar*i/random_vector_sum for i in random_vector]
-    return random_vector
-
-
-def gibbs_sampl(data, truth_obj_list, values):
+def gibbs(data, truth_obj_list):
     dist_list = []
-    iter_number_list = []
-
-    for t in range(5):
-        observ_val, var_index, accuracy_list, s_number = init_var(data=data)
-        prob = get_init_prob(data=data, values=values)
-        accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-        accuracy_delta = 0.3
+    iter_list = []
+    accuracy_all = []
+    for round in range(5):
+        var_index, obj_values, counts, prob, accuracy_list = init_var(data)
         iter_number = 0
-        while accuracy_delta > eps and iter_number < max_rounds:
-            indexes = copy.deepcopy(var_index)
-            accuracy_prev = copy.copy(accuracy_list)
-            round_compl = False
-            while not round_compl:
-                if len(indexes[0])!= 0 and len(indexes[1])!= 0:
-                    r = random.randint(0, 1)
-                    if r == 1:
-                        o_ind = indexes[0].pop()
-                        prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, values=values)
-                    else:
-                        s_index = indexes[1].pop()
-                        accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-                elif len(indexes[0])==0 and len(indexes[1])!=0:
-                        s_index = indexes[1].pop()
-                        accuracy_list[s_index] = get_accuracy(data=data, prob=prob, s_index=s_index)
-                elif len(indexes[0])!=0 and len(indexes[1])==0:
-                    o_ind = indexes[0].pop()
-                    prob[o_ind] = get_prob(data=data, accuracy_list=accuracy_list, obj_index=o_ind, values=values)
-                else:
-                    round_compl = True
+        dist_temp = []
+        while iter_number < max_rounds:
+            for o_ind in var_index[0]:
+                obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, obj_values=obj_values,
+                                                               counts=counts, data=data,
+                                                               prob=prob, accuracy_list=accuracy_list)
+
+            for s_ind in var_index[1]:
+                s_psi = data[data.S == s_ind].index
+                accuracy_list[s_ind] = get_a(s_psi=s_psi, counts=counts)
+
             iter_number += 1
-            accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
-        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob, values=values)
+            dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+            dist_temp.append(dist_metric)
+
+        accuracy_all.append(accuracy_list)
+        dist_metric = np.mean(dist_temp[-10:])
         dist_list.append(dist_metric)
-        iter_number_list.append(iter_number)
-    return [np.mean(dist_list), np.mean(iter_number_list)]
+        iter_list.append(iter_number)
+
+    accuracy_mean = []
+    accuracy_df = pd.DataFrame(data=accuracy_all)
+    for s in range(len(accuracy_list)):
+        accuracy_mean.append(np.mean(accuracy_df[s]))
+
+    return [np.mean(dist_list), np.mean(iter_list), accuracy_mean]

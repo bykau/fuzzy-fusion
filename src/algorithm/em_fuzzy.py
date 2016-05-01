@@ -125,7 +125,7 @@ def em_fuzzy(data, truth_obj_list):
     iter_list = []
     pi_prob_all = []
     accuracy_all = []
-    for round in range(5):
+    for round in range(1):
         prob, accuracy_list, cl_list, pi_list = init_var(data=data)
         s_number = len(data.S.drop_duplicates())
         accuracy_delta = 0.3
