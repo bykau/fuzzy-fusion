@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import re
 
@@ -108,3 +109,18 @@ def get_rest_data():
     data, truth_obj_list_new = get_data(obj_name_list=obj_name_list, truth_obj_list=truth_obj_list)
 
     return [data, truth_obj_list_new]
+
+
+def generate_swaps(data, pi):
+    for psi in data.iterrows():
+        psi_ind = psi[0]
+        psi = psi[1]
+        if np.random.binomial(1, pi, 1)[0] == 0:
+            obj_ind = psi.O
+            if obj_ind % 2 == 0:
+                swp_ind = obj_ind + 1
+            else:
+                swp_ind = obj_ind - 1
+            data.at[psi_ind, 'O'] = swp_ind
+
+    return data

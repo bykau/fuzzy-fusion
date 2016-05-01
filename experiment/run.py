@@ -1,9 +1,11 @@
 import sys
+import copy
 import random
 import time
 import pandas as pd
 import numpy as np
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
+# sys.path.append('/home/evgeny/fuzzy-fusion/experiment/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
@@ -12,7 +14,7 @@ from algorithm.gibbs import gibbs
 from algorithm.em import em
 from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
-from restaurants.restaurants import get_rest_data
+from restaurants.restaurants import get_rest_data, generate_swaps
 
 
 s_number = 10
@@ -20,7 +22,8 @@ obj_number = 100
 cl_size = 2
 possible_values = [0, 1]
 cov_list = [0.7]*s_number
-p_list = [1]*s_number
+p_list = [0.7]*s_number
+pi_list = [1., 0.95, 0.9, 0.85, 0.8, 0.75, 0.7]
 
 
 def get_dist(gt, output):
@@ -37,7 +40,7 @@ def s_data_run():
     g_t = []
     gf_t = []
     ground_truth = [0, 1]*(obj_number/2)
-    for pi in [0.9, 0.85, 0.8, 0.75, 0.7]:# 0.65, 0.6, 0.55, 0.5]:
+    for pi in pi_list:
 
         print 'pi: {}'.format(pi)
         print '*****'
@@ -91,17 +94,36 @@ def s_data_run():
 
 def rest_data_run():
     data, ground_truth = get_rest_data()
-    m_v = m_voting(data=data, truth_obj_list=ground_truth)
-    print 'm_v: {}'.format(m_v)
-    em_d, em_it, accuracy_em = em(data=data, truth_obj_list=ground_truth, values=possible_values)
-    print 'em: {}'.format(em_d)
-    g_d, g_it, accuracy_g = gibbs(data=data, truth_obj_list=ground_truth)
-    print 'g: {}'.format(g_d)
-    gf_d, gf_it, accuracy_gf, pi_gf = gibbs_fuzzy(data=data, truth_obj_list=ground_truth)
-    print 'gf: {}'.format(gf_d)
-    em_f, em_f_it, accuracy_em_f, pi_em_f = em_fuzzy(data=data, truth_obj_list=ground_truth)
-    print 'em_f: {}'.format(em_f)
-    print '---'
+    # ground_truth = ground_truth[:300]
+    # data = data[data.O.isin(range(300))]
+    result_list = []
+    for pi in pi_list:
+        print "pi: ", pi
+
+        for round in range(3):
+            print round
+            flag = True
+            while flag:
+                data_sw = generate_swaps(data=copy.deepcopy(data), pi=pi)
+                if len(data.O.drop_duplicates()) == len(data_sw.O.drop_duplicates()):
+                    flag = False
+
+            m_v = m_voting(data=data_sw, truth_obj_list=ground_truth)
+            print 'm_v: {}'.format(m_v)
+            em_d, em_it, accuracy_em = em(data=data_sw, truth_obj_list=ground_truth, values=possible_values)
+            print 'em: {}'.format(em_d)
+            g_d, g_it, accuracy_g = gibbs(data=data_sw, truth_obj_list=ground_truth)
+            print 'g: {}'.format(g_d)
+            gf_d, gf_it, accuracy_gf, pi_gf = gibbs_fuzzy(data=data_sw, truth_obj_list=ground_truth)
+            print 'gf: {}'.format(gf_d)
+            # em_f, em_f_it, accuracy_em_f, pi_em_f = em_fuzzy(data=data, truth_obj_list=ground_truth)
+            # print 'em_f: {}'.format(em_f)
+            print '---'
+
+            result_list.append([pi, m_v, em_d, g_d, gf_d])
+
+    df_data = pd.DataFrame(data=result_list, columns=['pi', 'mv', 'em', 'g', 'g_f'])
+    df_data.to_csv('output_data1.csv')
 
 
 if __name__ == '__main__':
