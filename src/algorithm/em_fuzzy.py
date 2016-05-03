@@ -5,7 +5,7 @@ import copy
 import itertools
 
 
-max_rounds = 100
+max_rounds = 300
 eps = 10e-5
 possible_values = [0, 1]
 

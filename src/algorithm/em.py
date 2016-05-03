@@ -11,7 +11,7 @@ import pandas as pd
 import copy
 import random
 
-max_rounds = 100
+max_rounds = 300
 eps = 10e-5
 
 
@@ -95,7 +95,7 @@ def em(data, truth_obj_list, values):
     dist_list = []
     iter_list = []
     accuracy_all = []
-    for round in range(5):
+    for round in range(1):
         prob = init_prob(data=data, values=values)
         s_number = len(data.S.drop_duplicates())
         accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]

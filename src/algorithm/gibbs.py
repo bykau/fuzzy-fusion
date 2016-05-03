@@ -105,7 +105,7 @@ def gibbs(data, truth_obj_list):
     dist_list = []
     iter_list = []
     accuracy_all = []
-    for round in range(5):
+    for round in range(1):
         var_index, obj_values, counts, prob, accuracy_list = init_var(data)
         iter_number = 0
         dist_temp = []

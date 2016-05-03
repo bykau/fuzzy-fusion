@@ -208,7 +208,7 @@ def gibbs_fuzzy(data, truth_obj_list):
     iter_list = []
     pi_prob_all = []
     accuracy_all = []
-    for round in range(5):
+    for round in range(1):
         var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list = init_var(data=data)
         iter_number = 0
         dist_temp = []
