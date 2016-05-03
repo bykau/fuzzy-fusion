@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import copy
 import random
+from common import get_dist_metric
 
 max_rounds = 300
 eps = 10e-5
@@ -47,11 +48,11 @@ def get_factor(accuracy, v, v_true, n):
     return factor
 
 
-def get_prob(data, truth_obj_list, accuracy_list, values):
+def get_prob(data, accuracy_list, values):
     likelihood = []
     l = len(values)
     n = l - 1
-    for obj_index in range(len(truth_obj_list)):
+    for obj_index in range(len(data.O.drop_duplicates())):
         prob = []
         term_list = [1]*l
         for inst in data[data.O == obj_index].iterrows():
@@ -80,17 +81,6 @@ def get_gt_prob(data, truth_obj_list, values):
     return prob_gt
 
 
-def get_dist_metric(prob_gt, prob):
-    prob_gt_vector = []
-    prob_vector = []
-    for i in range(len(prob_gt)):
-        prob_gt_vector += prob_gt[i]
-        prob_vector += prob[i]
-    dist_metric = np.dot(prob_gt_vector, prob_vector)
-    dist_metric_norm = dist_metric/len(prob_gt)
-    return dist_metric_norm
-
-
 def em(data, truth_obj_list, values):
     dist_list = []
     iter_list = []
@@ -102,14 +92,13 @@ def em(data, truth_obj_list, values):
         accuracy_delta = 0.3
         iter_number = 0
         while accuracy_delta > eps and iter_number < max_rounds:
-            prob = get_prob(data=data, truth_obj_list=truth_obj_list, accuracy_list=accuracy_list, values=values)
+            prob = get_prob(data=data, accuracy_list=accuracy_list, values=values)
             accuracy_prev = copy.copy(accuracy_list)
             accuracy_list = get_accuracy(data=data, prob=prob, s_number=s_number)
             accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
             iter_number += 1
 
-        prob_gt = get_gt_prob(data=data, truth_obj_list=truth_obj_list, values=values)
-        dist_metric = get_dist_metric(prob_gt=prob_gt, prob=prob)
+        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
         accuracy_all.append(accuracy_list)

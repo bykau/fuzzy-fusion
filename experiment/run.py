@@ -39,16 +39,16 @@ def s_data_run():
     em_t = []
     g_t = []
     gf_t = []
-    ground_truth = [0, 1]*(obj_number/2)
+    # ground_truth = [0, 1]*(obj_number/2)
     for pi in pi_list:
 
         print 'pi: {}'.format(pi)
         print '*****'
 
-        for round in range(2):
+        for round in range(5):
             print round
 
-            # ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
+            ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
             data, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
 
             m_v = m_voting(data=data, truth_obj_list=ground_truth)
@@ -94,19 +94,15 @@ def s_data_run():
 
 def rest_data_run():
     data, ground_truth = get_rest_data()
-    # ground_truth = ground_truth[:300]
-    # data = data[data.O.isin(range(300))]
+    data = data[data.O.isin(range(len(data.O.drop_duplicates())-len(data.O.drop_duplicates()) % 2))]
     result_list = []
     for pi in pi_list:
         print "pi: ", pi
 
-        for round in range(3):
+        for round in range(1):
             print round
-            flag = True
-            while flag:
-                data_sw = generate_swaps(data=copy.deepcopy(data), pi=pi)
-                if len(data.O.drop_duplicates()) == len(data_sw.O.drop_duplicates()):
-                    flag = False
+
+            data_sw = generate_swaps(data=copy.deepcopy(data), pi=pi)
 
             m_v = m_voting(data=data_sw, truth_obj_list=ground_truth)
             print 'm_v: {}'.format(m_v)
@@ -129,4 +125,3 @@ def rest_data_run():
 if __name__ == '__main__':
     # s_data_run()
     rest_data_run()
-

@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import copy
 import itertools
+from common import get_dist_metric
 
 
 max_rounds = 300
@@ -23,28 +24,6 @@ def init_var(data):
     pi_list = [random.uniform(0.7, 1)]*number_of_cl
 
     return [init_prob, accuracy_list, cl_list, pi_list]
-
-
-def get_dist_metric(data, truth_obj_list, prob):
-    prob_gt = []
-    val = []
-    l = len(possible_values)
-    for obj_index in range(len(data.O.drop_duplicates())):
-        val.append(possible_values)
-        prob_gt.append([0]*l)
-    for obj_ind, v_true in enumerate(truth_obj_list):
-        for v_ind, v in enumerate(val[obj_ind]):
-            if v == v_true:
-                prob_gt[obj_ind][v_ind] = 1
-    prob_gt_vector = []
-    prob_vector = []
-    for i in range(len(prob_gt)):
-        prob_gt_vector += prob_gt[i]
-        prob_vector += prob[i]
-    dist_metric = np.dot(prob_gt_vector, prob_vector)
-    dist_metric_norm = dist_metric/len(prob_gt)
-
-    return dist_metric_norm
 
 
 def e_step(data, accuracy_list, pi_list, cl_list):
@@ -140,7 +119,7 @@ def em_fuzzy(data, truth_obj_list):
             iter_number += 1
 
         prob = get_prob(cluster_tables=cluster_tables)
-        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob)
+        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
         accuracy_all.append(accuracy_list)
