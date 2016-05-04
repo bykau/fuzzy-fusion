@@ -36,7 +36,7 @@ def ef_test():
     print 'pi: {}'.format(pi)
     print '*****'
 
-    pd.DataFrame(data=[], columns=['pi', 's', 'obj_numb', 'mv', 'em', 'g', 'gf'])\
+    pd.DataFrame(columns=['pi', 's', 'obj_numb', 'mv', 'em', 'g', 'gf'])\
         .to_csv('outputs/efficiency.csv', index_label=False)
 
     for obj_number in obj_number_list:
@@ -79,7 +79,7 @@ def ef_test_emf():
     print 'pi: {}'.format(pi)
     print '*****'
 
-    pd.DataFrame(data=[], columns=['pi', 's', 'obj_numb', 'emf'])\
+    pd.DataFrame(columns=['pi', 's', 'obj_numb', 'emf'])\
         .to_csv('outputs/efficiency_emf.csv', index_label=False)
 
     for obj_number in emf_bj_number_list:
