@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import operator
 import re
 
 
@@ -69,58 +70,81 @@ def get_restaurants():
 
 
 def get_gt():
-    golden_data = pd.DataFrame(data=[], columns=['R', 'V'])
-    truth_obj_list = []
+    truth_val_list = []
     obj_name_list = []
+    gt_data = {}
     with open('../data/restaurants/' + golden_file) as f:
         for line in f:
             params = line.strip().split('\t')
             rest_name = re.sub(r'\W+', '', params[0].lower())
             v = v_dict[params[1]]
-            obj_name_list.append(rest_name)
-            truth_obj_list.append(v)
-    return [obj_name_list, truth_obj_list]
+            gt_data.update({rest_name: v})
+
+    sorted_gt_data = sorted(gt_data.items(), key=operator.itemgetter(0))
+    for gt in sorted_gt_data:
+        obj_name_list.append(gt[0])
+        truth_val_list.append(gt[1])
+
+    return [obj_name_list, truth_val_list]
 
 
-def get_data(obj_name_list, truth_obj_list):
+def get_data(obj_name_list, truth_val_list):
     all_data = pd.read_csv('../data/restaurants/restaurants.csv')
     data_list = []
-    for res_index, res_name in enumerate(obj_name_list):
-        res_data = all_data[all_data.R == res_name]
-        if res_data.empty:
-            truth_obj_list[res_index] = None
-            obj_name_list[res_index] = None
-            continue
-    truth_obj_list_new = [v for v in truth_obj_list if v != None]
-    obj_name_list = [v for v in obj_name_list if v != None]
-    for res_index, res_name in enumerate(obj_name_list):
+
+    names = all_data.R.drop_duplicates()
+    gt_names_list = sorted(list(set(names) & set(obj_name_list)))
+    rest_names = list(set(names) - set(gt_names_list))
+    all_names = gt_names_list + rest_names
+
+    truth_val_list_new = []
+    for v_ind, v in enumerate(obj_name_list):
+        if v in gt_names_list:
+            truth_val_list_new.append(truth_val_list[v_ind])
+
+    for res_index, res_name in enumerate(all_names):
         res_data = all_data[all_data.R == res_name]
         for psi in res_data.iterrows():
             psi = psi[1]
             data_list.append([int(psi.S), res_index, int(psi.V)])
     data = pd.DataFrame(data=data_list, columns=['S', 'O', 'V'])
 
-    return [data, truth_obj_list_new]
+    return [data, truth_val_list_new]
 
 
 def get_rest_data():
     # get_restaurants()
-    obj_name_list, truth_obj_list = get_gt()
-    data, truth_obj_list_new = get_data(obj_name_list=obj_name_list, truth_obj_list=truth_obj_list)
+    obj_name_list, truth_val_list = get_gt()
+    data, truth_val_list_new = get_data(obj_name_list=obj_name_list, truth_val_list=truth_val_list)
 
-    return [data, truth_obj_list_new]
+    return [data, truth_val_list_new]
 
 
 def generate_swaps(data, pi):
+    gt_len = 414
+    swp_gt = 0
+    numb_of_swaps = 0
     for psi in data.iterrows():
         psi_ind = psi[0]
         psi = psi[1]
         if np.random.binomial(1, pi, 1)[0] == 0:
+            if len(data[data.O == psi.O]) <= 2:
+                continue
+            if psi_ind < gt_len:
+                swp_gt += 1
             obj_ind = psi.O
             if obj_ind % 2 == 0:
                 swp_ind = obj_ind + 1
             else:
                 swp_ind = obj_ind - 1
             data.at[psi_ind, 'O'] = swp_ind
+            numb_of_swaps += 1
 
+    print 'total swaps: {}'.format(numb_of_swaps)
+    print 'total swaps in %: {}'.format(float(numb_of_swaps)/len(data))
+    print 'gt objects: {}'.format(gt_len)
+    print 'swaps in gt clusters in %: {}'.format(float(swp_gt)/gt_len)
+    print 'observations: {}'.format(len(data))
+    print 'sources: 12'
+    print 'objects: {}'.format(len(data.O.drop_duplicates()))
     return data
