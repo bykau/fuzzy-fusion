@@ -13,7 +13,7 @@ import random
 from common import get_dist_metric, get_precision
 
 max_rounds = 100
-eps = 10e-3
+eps = 10e-2
 
 
 def get_accuracy(data, prob, sources):
@@ -42,8 +42,8 @@ def get_factor(accuracy, v, v_true, n):
 
 
 def get_prob(data, accuracy_list, sources):
-    likelihood = []
-    for obj_index in range(len(data.O.drop_duplicates())):
+    likelihood = {}
+    for obj_index in data.O.drop_duplicates().values:
         values = sorted(data[data.O == obj_index].V.drop_duplicates().values)
         l = len(values)
         n = l - 1
@@ -58,11 +58,11 @@ def get_prob(data, accuracy_list, sources):
         denom = sum(term_list)
         for v_ind in range(l):
             prob.append(term_list[v_ind]/denom)
-        likelihood.append(prob)
+        likelihood.update({obj_index: prob})
     return likelihood
 
 
-def em(data, truth_obj_list):
+def em(data, ground_truth):
     accuracy_all = []
     sources = sorted(data.S.drop_duplicates().values)
     s_number = len(sources)
@@ -70,15 +70,15 @@ def em(data, truth_obj_list):
     accuracy_delta = 0.3
     iter_number = 0
     while accuracy_delta > eps and iter_number < max_rounds:
-        prob = get_prob(data=data, accuracy_list=accuracy_list , sources=sources)
+        prob = get_prob(data=data, accuracy_list=accuracy_list, sources=sources)
         accuracy_prev = copy.copy(accuracy_list)
         accuracy_list = get_accuracy(data=data, prob=prob, sources=sources)
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
 
-    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
     accuracy_all.append(accuracy_list)
-    precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
+    dist_metric = get_dist_metric(data=data, ground_truth=ground_truth, prob=prob)
+    precision = get_precision(data=data, ground_truth=ground_truth, prob=prob)
 
     accuracy_mean = []
     accuracy_df = pd.DataFrame(data=accuracy_all)
