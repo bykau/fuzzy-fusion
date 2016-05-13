@@ -12,7 +12,7 @@ import copy
 import random
 from common import get_dist_metric, get_precision
 
-max_rounds = 3
+max_rounds = 5
 alpha1, alpha2 = 1, 1
 
 
@@ -21,12 +21,14 @@ def init_var(data):
     s_number = len(s_ind)
     obj_index_list = sorted(data.O.drop_duplicates())
     var_index = [obj_index_list, s_ind]
-    accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
+    accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
     obj_values = []
     init_prob = []
     for obj in range(len(obj_index_list)):
         possible_values = sorted(list(data[data.O == obj].V.drop_duplicates().values))
-        obj_values.append(random.choice(possible_values))
+        values = list(data[data.O == obj].V.values)
+        # obj_values.append(random.choice(possible_values))
+        obj_values.append(max(set(values), key=values.count))
         l = len(possible_values)
         init_prob.append([1./l]*l)
 
@@ -110,8 +112,8 @@ def gibbs(data, truth_obj_list):
         precision_temp.append(precision)
         accuracy_all.append(accuracy_list)
 
-    dist_metric = np.mean(dist_temp[-2:])
-    precision = np.mean(precision_temp[-2:])
+    dist_metric = np.mean(dist_temp[-3:])
+    precision = np.mean(precision_temp[-3:])
 
     accuracy_mean = []
     accuracy_df = pd.DataFrame(data=accuracy_all)

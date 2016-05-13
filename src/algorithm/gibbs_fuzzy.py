@@ -4,7 +4,8 @@ import copy
 from scipy.stats import beta
 import pandas as pd
 
-max_rounds = 3
+
+max_rounds = 5
 alpha1, alpha2 = 1, 1
 beta1, beta2 = 1, 1
 gamma1, gamma2 = 1, 1
@@ -15,17 +16,18 @@ def init_var(data):
     s_number = len(s_ind)
     obj_index_list = sorted(data.O.drop_duplicates())
     var_index = [obj_index_list, s_ind]
-    accuracy_list = [random.uniform(0.6, 0.95) for i in range(s_number)]
-    pi_init = random.uniform(0.7, 1)
+    accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
+    pi_init = 0.8
     pi_prob = [pi_init]*(len(obj_index_list)/2)
-    g_values = np.random.binomial(1, pi_init, len(data))
+    g_values = [1]*len(data)
 
     obj_values = []
     init_prob = []
     for obj in range(len(obj_index_list)):
         possible_values, values = get_possible_values(o_ind=obj, data=data, g_values=g_values)
-        obj_values.append(random.choice(possible_values))
-        # obj_values.append(max(set(values), key=values.count))
+        # obj_values.append(random.choice(possible_values))
+        # obj_values.append(obj%2)
+        obj_values.append(max(set(values), key=values.count))
         l = len(possible_values)
         init_prob.append([1./l]*l)
 
@@ -158,13 +160,12 @@ def get_g(g_ind, g_values, pi_prob, obj_values, accuracy_list, counts, data):
                         pr_pi *= (1-accuracy)/n
         l_p.append(pr_pi)
     norm_const = sum(l_p)
-    l_p[0] /= norm_const
-    l_p[1] /= norm_const
-    try:
+    if l_p[0] == l_p[1]:
+        g_new = np.random.binomial(1, pi_prob[cluster], 1)[0]
+    else:
+        l_p[0] /= norm_const
+        l_p[1] /= norm_const
         g_new = np.random.binomial(1, l_p[1], 1)[0]
-    except ValueError:
-        print 'ddd'
-        exit()
     g_prev = g_values[g_ind]
     if g_new != g_prev:
         if g_new == 1:
@@ -279,6 +280,7 @@ def gibbs_fuzzy(data, truth_obj_list):
         var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list = init_var(data=data)
         iter_number = 0
         dist_temp = []
+        # precision_temp = []
         while iter_number < max_rounds:
             for g_ind in range(len(g_values)):
                 g_prev = g_values[g_ind]
@@ -300,14 +302,19 @@ def gibbs_fuzzy(data, truth_obj_list):
 
             dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list,
                                           prob=prob[0:len(truth_obj_list)], g_values=g_values)
+            # precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
+            # precision_temp.append(precision)
             dist_temp.append(dist_metric)
             # print dist_metric
 
         pi_prob_all.append(pi_prob)
         accuracy_all.append(accuracy_list)
-        dist_metric = np.mean(dist_temp[-10:])
+        dist_metric = np.mean(dist_temp[-3:])
         dist_list.append(dist_metric)
         iter_list.append(iter_number)
+
+    dist_metric = np.mean(dist_temp[-3:])
+    # precision = np.mean(precision_temp[-10:])
 
     accuracy_mean = []
     accuracy_df = pd.DataFrame(data=accuracy_all)
@@ -317,4 +324,5 @@ def gibbs_fuzzy(data, truth_obj_list):
     pi_mean = []
     for pi in range(len(pi_prob)):
         pi_mean.append(np.mean(pi_df[pi]))
-    return [np.mean(dist_list), np.mean(iter_list), accuracy_mean, pi_mean]
+
+    return [dist_metric, np.mean(iter_list), accuracy_mean, pi_mean]
