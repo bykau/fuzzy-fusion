@@ -25,8 +25,6 @@ def init_var(data):
     init_prob = []
     for obj in range(len(obj_index_list)):
         possible_values, values = get_possible_values(o_ind=obj, data=data, g_values=g_values)
-        # obj_values.append(random.choice(possible_values))
-        # obj_values.append(obj%2)
         obj_values.append(max(set(values), key=values.count))
         l = len(possible_values)
         init_prob.append([1./l]*l)
@@ -283,7 +281,6 @@ def gibbs_fuzzy(data, truth_obj_list):
         # precision_temp = []
         while iter_number < max_rounds:
             for g_ind in range(len(g_values)):
-                g_prev = g_values[g_ind]
                 g_values[g_ind] = get_g(g_ind=g_ind, g_values=g_values, pi_prob=pi_prob, obj_values=obj_values,
                                         accuracy_list=accuracy_list, counts=counts, data=data)
 
