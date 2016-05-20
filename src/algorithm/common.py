@@ -38,3 +38,11 @@ def get_precision(data, truth_obj_list, prob):
     precision = float(count)/len(truth_obj_list)
 
     return precision
+
+
+def get_accuracy_err(acc_truth, acc):
+    err = 0.
+    for a_t, a in zip(acc_truth, acc):
+        err += abs(a_t - a)
+
+    return err

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import copy
 import random
-from common import get_dist_metric, get_precision
+from common import get_dist_metric, get_precision, get_accuracy_err
 
 max_rounds = 100
 eps = 10e-3
@@ -62,7 +62,7 @@ def get_prob(data, accuracy_list, sources):
     return likelihood
 
 
-def em(data, truth_obj_list):
+def em(data, truth_obj_list, accuracy_truth):
     accuracy_all = []
     sources = sorted(data.S.drop_duplicates().values)
     s_number = len(sources)
@@ -84,5 +84,6 @@ def em(data, truth_obj_list):
     accuracy_df = pd.DataFrame(data=accuracy_all)
     for s in range(len(accuracy_list)):
         accuracy_mean.append(np.mean(accuracy_df[s]))
+    accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
 
-    return [dist_metric, iter_number, accuracy_mean, precision]
+    return [dist_metric, iter_number, precision, accuracy_err]

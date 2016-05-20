@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.stats import beta
 import copy
 import random
-from common import get_dist_metric, get_precision
+from common import get_dist_metric, get_precision, get_accuracy_err
 
 max_rounds = 5
 alpha1, alpha2 = 1, 1
@@ -89,7 +89,7 @@ def get_a(s_psi, counts):
     return a_new
 
 
-def gibbs(data, truth_obj_list):
+def gibbs(data, truth_obj_list, accuracy_truth):
     accuracy_all = []
     var_index, obj_values, counts, prob, accuracy_list = init_var(data)
     iter_number = 0
@@ -119,5 +119,6 @@ def gibbs(data, truth_obj_list):
     accuracy_df = pd.DataFrame(data=accuracy_all)
     for s in range(len(accuracy_list)):
         accuracy_mean.append(np.mean(accuracy_df[s]))
+    accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
 
-    return [dist_metric, iter_number, accuracy_mean, precision]
+    return [dist_metric, iter_number, precision, accuracy_err]
