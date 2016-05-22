@@ -22,7 +22,7 @@ cl_size = 2
 possible_values = [0, 1]
 cov_list = [0.7]*s_number
 p_list = [0.7]*s_number
-pi = 0.8
+pi = 1.
 
 
 def get_dist(gt, output):
@@ -51,27 +51,27 @@ def ef_test():
         print 'm_v: {}, seconds: {}'.format(mv, ex_t_mv)
 
         t_em = time.time()
-        em_d, em_it, accuracy_em = em(data=data, truth_obj_list=ground_truth, values=possible_values)
+        em_d, em_it, em_pr, em_ac_err = em(data=data, truth_obj_list=ground_truth, accuracy_truth=p_list)
         ex_t_em = time.time() - t_em
         print 'em: {}, seconds: {}'.format(em_d, ex_t_em)
 
         t_g = time.time()
-        g_d, g_it, accuracy_g = gibbs(data=data, truth_obj_list=ground_truth)
+        g_d, g_it, g_pr, g_ac_err = gibbs(data=data, truth_obj_list=ground_truth, accuracy_truth=p_list)
         ex_t_g = time.time() - t_g
         print 'g: {}, seconds: {}'.format(g_d, ex_t_g)
 
-        t_gf = time.time()
-        gf_d, gf_it, accuracy_gf, pi_gf = gibbs_fuzzy(data=data, truth_obj_list=ground_truth)
-        ex_t_gf = time.time() - t_gf
-        print 'gf: {}, seconds: {}'.format(gf_d, ex_t_gf)
+        # t_gf = time.time()
+        # gf_d, gf_it, accuracy_gf, pi_gf = gibbs_fuzzy(data=data, truth_obj_list=ground_truth)
+        # ex_t_gf = time.time() - t_gf
+        # print 'gf: {}, seconds: {}'.format(gf_d, ex_t_gf)
 
         print '---'
 
-        result_list = [pi, s_number, obj_number, ex_t_mv, ex_t_em, ex_t_g, ex_t_gf]
+        result_list = [pi, s_number, obj_number, ex_t_mv, ex_t_em, ex_t_g]
         data_frame = pd.read_csv('outputs/efficiency.csv')
         data_frame = data_frame.append(pd.DataFrame(data=[result_list],
                                                     columns=['pi', 's', 'obj_numb',
-                                                             'mv', 'em', 'g', 'gf']))
+                                                             'mv', 'em', 'g']))
         data_frame.to_csv('outputs/efficiency.csv', index_label=False)
 
 
