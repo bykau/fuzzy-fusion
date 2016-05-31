@@ -100,20 +100,21 @@ def s_data_run():
 
 
 def flights_data_run():
-    gt_data = pd.read_csv('../data/flight/cleaned_data/gt_b_data.csv', index_col=0)
-    data = pd.read_csv('../data/flight/cleaned_data/b_data.csv', index_col=0)
-    ground_truth_list = list(gt_data.V.values)
-    data = data[data.O.isin(range(len(ground_truth_list)))]
+    ground_truth = pd.read_csv('../data/flight/data/gt.csv', low_memory=False)
+    data = pd.read_csv('../data/flight/data/data.csv', low_memory=False)
 
-    mv, mv_pr = m_voting(data=data, truth_obj_list=ground_truth_list)
+    # ground_truth = ground_truth[ground_truth.O.isin([8, 14])]
+    # data = data[data.O.isin([0,1,2,3,4,5,6,7,8,9,10,11,12,13, 14])]
+
+    mv, mv_pr = m_voting(data=data, ground_truth=ground_truth)
     print 'mv: {}'.format(mv)
     print 'mv_pr: {}'.format(mv_pr)
 
-    em_d, em_it, accuracy_em, em_pr = em(data=data, truth_obj_list=ground_truth_list)
+    em_d, em_it, accuracy_em, em_pr = em(data=data, ground_truth=ground_truth)
     print 'em: {}'.format(em_d)
     print 'em_pr: {}'.format(em_pr)
 
 
 if __name__ == '__main__':
-    s_data_run()
-    # flights_data_run()
+    # s_data_run()
+    flights_data_run()
