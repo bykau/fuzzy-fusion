@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 import copy
 import random
-from common import get_dist_metric, get_precision
+from common import get_dist_metric, get_precision, get_accuracy_err
 
 max_rounds = 100
-eps = 10e-2
+eps = 10e-3
 
 
 def get_accuracy(data, prob, sources):
@@ -21,15 +21,18 @@ def get_accuracy(data, prob, sources):
     for s in sources:
         p_sum = 0.
         size = 0.
-        for psi in data[data.S == s].iterrows():
-            psi = psi[1]
-            obj_values = sorted(data[data.O == psi.O].V.drop_duplicates().values)
-            observed_val = psi.V
-            v_ind = obj_values.index(observed_val)
-            p_sum += prob[psi.O][v_ind]
+        for obj_index in data.keys():
+            obj_data = data[obj_index]
+            if s not in obj_data[0]:
+                continue
+            obj_possible_values = sorted(set(obj_data[1]))
+            observed_val = obj_data[1][obj_data[0].index(s)]
+            val_ind = obj_possible_values.index(observed_val)
+            p_sum += prob[obj_index][val_ind]
             size += 1
         accuracy = p_sum/size
         accuracy_list.append(accuracy)
+
     return accuracy_list
 
 
@@ -42,30 +45,28 @@ def get_factor(accuracy, v, v_true, n):
 
 
 def get_prob(data, accuracy_list, sources):
-    likelihood = {}
-    for obj_index in data.O.drop_duplicates().values:
-        values = sorted(data[data.O == obj_index].V.drop_duplicates().values)
+    likelihood = []
+    for obj_index in data.keys():
+        obj_data = data[obj_index]
+        values = sorted(set(obj_data[1]))
         l = len(values)
         n = l - 1
         prob = []
         term_list = [1]*l
-        for inst in data[data.O == obj_index].iterrows():
-            s_ind = sources.index(inst[1].S)
+        for s_ind, v in zip(obj_data[0], obj_data[1]):
             accuracy = accuracy_list[s_ind]
-            v = inst[1].V
             for v_ind, v_true in enumerate(values):
                 term_list[v_ind] *= get_factor(accuracy, v, v_true, n)
         denom = sum(term_list)
         for v_ind in range(l):
             prob.append(term_list[v_ind]/denom)
-        likelihood.update({obj_index: prob})
+        likelihood.append(prob)
     return likelihood
 
 
-def em(data, ground_truth):
+def em(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
     accuracy_all = []
-    sources = sorted(data.S.drop_duplicates().values)
-    s_number = len(sources)
+    sources = range(s_number)
     accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
     accuracy_delta = 0.3
     iter_number = 0
@@ -76,13 +77,17 @@ def em(data, ground_truth):
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
 
+    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
     accuracy_all.append(accuracy_list)
-    dist_metric = get_dist_metric(data=data, ground_truth=ground_truth, prob=prob)
-    precision = get_precision(data=data, ground_truth=ground_truth, prob=prob)
+    precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
 
     accuracy_mean = []
     accuracy_df = pd.DataFrame(data=accuracy_all)
     for s in range(len(accuracy_list)):
         accuracy_mean.append(np.mean(accuracy_df[s]))
+    if accuracy_truth is not None:
+        accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
+    else:
+        accuracy_err = None
 
-    return [dist_metric, iter_number, accuracy_mean, precision]
+    return [dist_metric, iter_number, precision, accuracy_err]

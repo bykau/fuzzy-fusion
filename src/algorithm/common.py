@@ -1,18 +1,15 @@
 import numpy as np
 
 
-def get_dist_metric(data, ground_truth, prob):
-    truth_obj_val = list(ground_truth.V.values)
-    truth_obj_ind = list(ground_truth.O.values)
-    prob = [prob[i] for i in truth_obj_ind]
+def get_dist_metric(data, truth_obj_list, prob):
     prob_gt = []
     val = []
-    for obj_index in truth_obj_ind:
-        possible_values = sorted(data[data.O == obj_index].V.drop_duplicates().values)
+    for obj_index in range(len(truth_obj_list)):
+        possible_values = sorted(set(data[obj_index][1]))
         val.append(possible_values)
         l = len(possible_values)
         prob_gt.append([0]*l)
-    for obj_ind, v_true in enumerate(truth_obj_val):
+    for obj_ind, v_true in enumerate(truth_obj_list):
         for v_ind, v in enumerate(val[obj_ind]):
             if v == v_true:
                 prob_gt[obj_ind][v_ind] = 1.
@@ -27,20 +24,37 @@ def get_dist_metric(data, ground_truth, prob):
     return dist_metric_norm
 
 
-def get_precision(data, ground_truth, prob):
-    truth_obj_val = list(ground_truth.V.values)
-    truth_obj_ind = list(ground_truth.O.values)
-
+def get_precision(data, truth_obj_list, prob):
     obj_result_list = []
-    for obj_index in truth_obj_ind:
-        possible_values = sorted(data[data.O == obj_index].V.drop_duplicates().values)
+    for obj_index in range(len(truth_obj_list)):
+        possible_values = sorted(set(data[obj_index][1]))
         val_ind = prob[obj_index].index(max(prob[obj_index]))
-        val = possible_values[val_ind]
-        obj_result_list.append(val)
+        result_val = possible_values[val_ind]
+        obj_result_list.append(result_val)
     count = 0
-    for gt, res in zip(truth_obj_val, obj_result_list):
+    for gt, res in zip(truth_obj_list, obj_result_list):
         if gt == res:
             count += 1
-    precision = float(count)/len(truth_obj_val)
+    precision = float(count)/len(truth_obj_list)
 
     return precision
+
+
+def get_accuracy_err(acc_truth, acc):
+    err = 0.
+    for a_t, a in zip(acc_truth, acc):
+        err += abs(a_t - a)
+
+    return err
+
+
+def get_data(data):
+    obj_index_list = np.sort(data.O.drop_duplicates())
+    data_new = {}
+    for obj in obj_index_list:
+        data_obj = data[data.O == obj]
+        s_obj = list(data_obj.S.values)
+        values_obj = list(data_obj.V.values)
+        data_new.update({obj: [s_obj, values_obj]})
+
+    return data_new

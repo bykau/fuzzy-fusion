@@ -10,63 +10,63 @@ import pandas as pd
 from scipy.stats import beta
 import copy
 import random
-from common import get_dist_metric, get_precision
+from common import get_dist_metric, get_precision, get_accuracy_err
 
 max_rounds = 5
 alpha1, alpha2 = 1, 1
 
 
-def init_var(data):
-    s_ind = sorted(data.S.drop_duplicates())
-    s_number = len(s_ind)
-    obj_index_list = sorted(data.O.drop_duplicates())
-    var_index = [obj_index_list, s_ind]
+def init_var(data, s_number):
+    s_index_list = range(s_number)
+    obj_index_list = data.keys()
+    var_index = [obj_index_list, s_index_list]
     accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
     obj_values = []
     init_prob = []
-    for obj in range(len(obj_index_list)):
-        possible_values = sorted(list(data[data.O == obj].V.drop_duplicates().values))
-        values = list(data[data.O == obj].V.values)
-        # obj_values.append(random.choice(possible_values))
-        obj_values.append(max(set(values), key=values.count))
+    counts = {}
+    for obj_index in obj_index_list:
+        values = data[obj_index][1]
+        possible_values = sorted(set(values))
+        obj_val = max(set(values), key=values.count)
+        obj_values.append(obj_val)
         l = len(possible_values)
         init_prob.append([1./l]*l)
 
-    counts_list = []
-    for psi in data.iterrows():
-        psi = psi[1]
-        if psi.V == obj_values[psi.O]:
-            counts_list.append(1)
-        else:
-            counts_list.append(0)
-    counts = pd.DataFrame(counts_list, columns=['c'])
+        sources = data[obj_index][0]
+        counts_list = []
+        for val in values:
+            if val == obj_val:
+                counts_list.append(1)
+            else:
+                counts_list.append(0)
+        counts.update({obj_index: [sources, counts_list]})
 
     return [var_index, obj_values, counts, init_prob, accuracy_list]
 
 
-def get_o(o_ind, obj_values, counts, data, prob, accuracy_list):
+def get_o(o_ind, obj_values, counts, obj_data, accuracy_list):
     l_p = []
     l_c = []
-    possible_values = sorted(list(data[data.O == o_ind].V.drop_duplicates().values))
+    sources = obj_data[0]
+    values = obj_data[1]
+    possible_values = sorted(set(values))
     n = len(possible_values) - 1
-    for v_ind, v in enumerate(possible_values):
-        # pr = prob[o_ind][v_ind]
+    for v in possible_values:
         pr = 1
         counts_v = copy.deepcopy(counts)
-        psi_obj = data[data.O == o_ind]
-        for psi in psi_obj.iterrows():
-            psi_ind = psi[0]
-            psi = psi[1]
-            if psi.V == v:
-                pr *= accuracy_list[psi.S]
+        for psi_ind, psi in enumerate(values):
+            s = sources[psi_ind]
+            s_accuracy = accuracy_list[s]
+            if psi == v:
+                pr *= s_accuracy
                 c_new = 1
             else:
-                pr *= (1 - accuracy_list[psi.S])/n
+                pr *= (1 - s_accuracy)/n
                 c_new = 0
 
-            c_old = counts_v.at[psi_ind, 'c']
+            c_old = counts[o_ind][1][psi_ind]
             if c_new != c_old:
-                counts_v.at[psi_ind, 'c'] = c_new
+                counts_v[o_ind][1][psi_ind] = c_new
         l_p.append(pr)
         l_c.append(counts_v)
     norm_const = sum(l_p)
@@ -80,30 +80,41 @@ def get_o(o_ind, obj_values, counts, data, prob, accuracy_list):
     return [v_new, counts_new, l_p]
 
 
-def get_a(s_psi, counts):
-    s_counts = counts.loc[s_psi]
-    count_p = len(s_counts[s_counts.c == 1])
-    count_m = len(s_counts[s_counts.c == 0])
+def get_a(data, s, counts):
+    count_p = 0
+    count_m = 0
+    obj_index_list = data.keys()
+    for obj_index in obj_index_list:
+        obj_data = data[obj_index]
+        sources = obj_data[0]
+        if s not in sources:
+            continue
+        obj_counts = counts[obj_index][1]
+        s_index = sources.index(s)
+        c = obj_counts[s_index]
+        if c == 1:
+            count_p += 1
+        else:
+            count_m += 1
     a_new = beta.rvs(count_p + alpha1, count_m + alpha2, size=1)[0]
 
     return a_new
 
 
-def gibbs(data, truth_obj_list):
+def gibbs(data, truth_obj_list, accuracy_truth, s_number):
     accuracy_all = []
-    var_index, obj_values, counts, prob, accuracy_list = init_var(data)
+    var_index, obj_values, counts, prob, accuracy_list = init_var(data=data, s_number=s_number)
     iter_number = 0
     dist_temp = []
     precision_temp = []
     while iter_number < max_rounds:
         for o_ind in var_index[0]:
+            obj_data = data[o_ind]
             obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, obj_values=obj_values,
-                                                           counts=counts, data=data,
-                                                           prob=prob, accuracy_list=accuracy_list)
-
-        for s_ind in var_index[1]:
-            s_psi = data[data.S == s_ind].index
-            accuracy_list[s_ind] = get_a(s_psi=s_psi, counts=counts)
+                                                           counts=counts, obj_data=obj_data,
+                                                           accuracy_list=accuracy_list)
+        for s in var_index[1]:
+            accuracy_list[s] = get_a(data=data, s=s, counts=counts)
 
         iter_number += 1
         dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
@@ -119,5 +130,6 @@ def gibbs(data, truth_obj_list):
     accuracy_df = pd.DataFrame(data=accuracy_all)
     for s in range(len(accuracy_list)):
         accuracy_mean.append(np.mean(accuracy_df[s]))
+    accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
 
-    return [dist_metric, iter_number, accuracy_mean, precision]
+    return [dist_metric, iter_number, precision, accuracy_err]
