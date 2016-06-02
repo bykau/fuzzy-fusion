@@ -101,7 +101,7 @@ def get_a(data, s, counts):
     return a_new
 
 
-def gibbs(data, truth_obj_list, accuracy_truth, s_number):
+def gibbs(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
     accuracy_all = []
     var_index, obj_values, counts, prob, accuracy_list = init_var(data=data, s_number=s_number)
     iter_number = 0
@@ -130,6 +130,9 @@ def gibbs(data, truth_obj_list, accuracy_truth, s_number):
     accuracy_df = pd.DataFrame(data=accuracy_all)
     for s in range(len(accuracy_list)):
         accuracy_mean.append(np.mean(accuracy_df[s]))
-    accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
+    if accuracy_truth is not None:
+        accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
+    else:
+        accuracy_err = None
 
     return [dist_metric, iter_number, precision, accuracy_err]
