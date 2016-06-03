@@ -1,43 +1,28 @@
 import numpy as np
 
 
-def get_dist_metric(data, truth_obj_list, prob):
-    prob_gt = []
-    val = []
-    for obj_index in range(len(truth_obj_list)):
-        possible_values = sorted(set(data[obj_index][1]))
-        val.append(possible_values)
-        l = len(possible_values)
-        prob_gt.append([0]*l)
-    for obj_ind, v_true in enumerate(truth_obj_list):
-        for v_ind, v in enumerate(val[obj_ind]):
-            if v == v_true:
-                prob_gt[obj_ind][v_ind] = 1.
-    prob_gt_vector = []
-    prob_vector = []
-    for i in range(len(prob_gt)):
-        prob_gt_vector += prob_gt[i]
-        prob_vector += prob[i]
-    dist_metric = np.dot(prob_gt_vector, prob_vector)
-    dist_metric_norm = dist_metric/len(prob_gt)
+def get_metrics(data, gt, prob):
+    dist = 0.
+    gt_objects = gt.keys()
+    norm_const = len(gt_objects)
+    pres_count = 0.
+    for obj in gt_objects:
+        possible_values = sorted(set(data[obj][1]))
+        try:
+            gt_val_ind = possible_values.index(gt[obj])
+        except ValueError:
+            norm_const -= 1
+            continue
+        obj_prob = prob[obj]
+        dist += obj_prob[gt_val_ind]
 
-    return dist_metric_norm
+        obj_ind = obj_prob.index(max(obj_prob))
+        if gt_val_ind == obj_ind:
+            pres_count += 1
+    dist_norm = dist/norm_const
+    precision = pres_count/norm_const
 
-
-def get_precision(data, truth_obj_list, prob):
-    obj_result_list = []
-    for obj_index in range(len(truth_obj_list)):
-        possible_values = sorted(set(data[obj_index][1]))
-        val_ind = prob[obj_index].index(max(prob[obj_index]))
-        result_val = possible_values[val_ind]
-        obj_result_list.append(result_val)
-    count = 0
-    for gt, res in zip(truth_obj_list, obj_result_list):
-        if gt == res:
-            count += 1
-    precision = float(count)/len(truth_obj_list)
-
-    return precision
+    return dist_norm, precision
 
 
 def get_accuracy_err(acc_truth, acc):

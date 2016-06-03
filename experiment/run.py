@@ -1,18 +1,16 @@
-import sys
-import copy
 import random
-import time
-import pandas as pd
+import sys
+
 import numpy as np
+
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
 # sys.path.append('/home/evgeny/fuzzy-fusion/experiment/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
-from algorithm.gibbs_fuzzy import gibbs_fuzzy
-from algorithm.gibbs import gibbs
-from algorithm.em import em
-from algorithm.em_fuzzy import em_fuzzy
+# from algorithm.gibbs import gibbs
+# from algorithm.em import em
+# from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
 from algorithm.common import get_data
 
@@ -49,6 +47,7 @@ def s_data_run():
 
                 ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
                 data, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
+                ground_truth = [range(obj_number), ground_truth]
 
                 data = get_data(data=data)
 
@@ -87,22 +86,22 @@ def s_data_run():
     # df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
     # df_acc_err.to_csv('outputs/acc_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
 
+
 def flights_data_run():
-    ground_truth = pd.read_csv('../data/flight/data/gt.csv', low_memory=False)
-    data = pd.read_csv('../data/flight/data/data.csv', low_memory=False)
+    # ground_truth = pd.read_csv('../data/flight/data/gt.csv', low_memory=False)
+    # data = pd.read_csv('../data/flight/data/data.csv', low_memory=False)
+    from flights_data import flights
+    from flights_gt import ground_truth
 
-    # ground_truth = ground_truth[ground_truth.O.isin([8, 14])]
-    # data = data[data.O.isin([0,1,2,3,4,5,6,7,8,9,10,11,12,13, 14])]
-
-    mv, mv_pr = m_voting(data=data, ground_truth=ground_truth)
+    mv, mv_pr = m_voting(data=flights, gt=ground_truth)
     print 'mv: {}'.format(mv)
     print 'mv_pr: {}'.format(mv_pr)
 
-    em_d, em_it, accuracy_em, em_pr = em(data=data, ground_truth=ground_truth)
-    print 'em: {}'.format(em_d)
-    print 'em_pr: {}'.format(em_pr)
+    # em_d, em_it, accuracy_em, em_pr = em(data=flights, ground_truth=ground_truth)
+    # print 'em: {}'.format(em_d)
+    # print 'em_pr: {}'.format(em_pr)
 
 
 if __name__ == '__main__':
-    s_data_run()
-    # flights_data_run()
+    # s_data_run()
+    flights_data_run()

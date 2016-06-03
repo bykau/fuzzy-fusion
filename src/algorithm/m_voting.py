@@ -1,9 +1,9 @@
-from common import get_dist_metric, get_precision
+from common import get_metrics
 
 
-def m_voting(data, truth_obj_list):
+def m_voting(data, gt):
     obj_index_list = data.keys()
-    prob = []
+    prob = {}
     for obj in obj_index_list:
         obj_values = data[obj][1]
         possible_values = sorted(set(obj_values))
@@ -13,8 +13,7 @@ def m_voting(data, truth_obj_list):
             obj_pr.append(v_count)
         norm_const = len(obj_values)
         obj_pr = [float(i)/norm_const for i in obj_pr]
-        prob.append(obj_pr)
-    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
-    precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
+        prob.update({obj: obj_pr})
+    dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
 
     return dist_metric, precision
