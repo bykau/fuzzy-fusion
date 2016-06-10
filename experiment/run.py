@@ -9,7 +9,7 @@ sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fus
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
 # from algorithm.gibbs import gibbs
-# from algorithm.em import em
+from algorithm.em import em
 # from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
 from algorithm.common import get_data
@@ -93,13 +93,15 @@ def flights_data_run():
     from flights_data import flights
     from flights_gt import ground_truth
 
+    s_number = 38
+
     mv, mv_pr = m_voting(data=flights, gt=ground_truth)
     print 'mv: {}'.format(mv)
     print 'mv_pr: {}'.format(mv_pr)
 
-    # em_d, em_it, accuracy_em, em_pr = em(data=flights, ground_truth=ground_truth)
-    # print 'em: {}'.format(em_d)
-    # print 'em_pr: {}'.format(em_pr)
+    em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
+    print 'em: {}'.format(em_d)
+    print 'em_pr: {}'.format(em_pr)
 
 
 if __name__ == '__main__':

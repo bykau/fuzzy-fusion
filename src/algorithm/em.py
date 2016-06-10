@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import copy
 import random
-from common import get_dist_metric, get_precision, get_accuracy_err
+from common import get_metrics, get_accuracy_err
 
 max_rounds = 100
 eps = 10e-3
@@ -45,26 +45,26 @@ def get_factor(accuracy, v, v_true, n):
 
 
 def get_prob(data, accuracy_list, sources):
-    likelihood = []
+    likelihood = {}
     for obj_index in data.keys():
         obj_data = data[obj_index]
-        values = sorted(set(obj_data[1]))
-        l = len(values)
+        possible_values = sorted(set(obj_data[1]))
+        l = len(possible_values)
         n = l - 1
         prob = []
         term_list = [1]*l
         for s_ind, v in zip(obj_data[0], obj_data[1]):
             accuracy = accuracy_list[s_ind]
-            for v_ind, v_true in enumerate(values):
+            for v_ind, v_true in enumerate(possible_values):
                 term_list[v_ind] *= get_factor(accuracy, v, v_true, n)
         denom = sum(term_list)
         for v_ind in range(l):
             prob.append(term_list[v_ind]/denom)
-        likelihood.append(prob)
+        likelihood.update({obj_index: prob})
     return likelihood
 
 
-def em(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
+def em(data=None, gt=None, accuracy_truth=None, s_number=None):
     accuracy_all = []
     sources = range(s_number)
     accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
@@ -77,9 +77,8 @@ def em(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
 
-    dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
     accuracy_all.append(accuracy_list)
-    precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
+    dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
 
     accuracy_mean = []
     accuracy_df = pd.DataFrame(data=accuracy_all)
