@@ -88,8 +88,20 @@ def s_data_run():
 
 
 def flights_data_run():
+    # import pandas as pd
     # ground_truth = pd.read_csv('../data/flight/data/gt.csv', low_memory=False)
     # data = pd.read_csv('../data/flight/data/data.csv', low_memory=False)
+    # data_py = {}
+    # objs_ind = sorted(data.O.drop_duplicates().values)
+    # for obj in objs_ind:
+    #     obj_s = list(data[data.O == obj].S.values)
+    #     obj_vals = list(data[data.O == obj].V.values)
+    #     data_py.update({obj: [obj_s, obj_vals]})
+    # f = open('flights_data.py', 'w')
+    # f.write(str(data_py))
+    # f.close()
+
+
     from flights_data import flights
     from flights_gt import ground_truth
 

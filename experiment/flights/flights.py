@@ -21,9 +21,7 @@ def cook_data():
             try:
                 val = int(vote[1])
             except ValueError:
-                val = vote[1]
-                if val == 'Not provided by airline':
-                    continue
+                val = vote[1].strip()
             data_list.append([s, obj_ind, val])
     data = pd.DataFrame(data=data_list, columns=['S', 'O', 'V'])
     data.to_csv('../../data/flight/data/data.csv', index=False)
