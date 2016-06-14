@@ -106,72 +106,62 @@ def get_o(o_ind, g_values, obj_values, counts, data, accuracy_list):
     return [v_new, counts_new, l_p]
 
 
-def update_g(s, g_values, pi_prob, obj_values, accuracy_list, counts, data):
+def update_g(s, obj_index, g_values, pi_prob, obj_values, accuracy, counts, data):
     l_p = []
     possible_values = [0, 1]
-    accuracy = accuracy_list[s]
-    cluster = psi.O/2
+    cluster = obj_index/2
+    psi_index = data[obj_index][0].index(s)
+    psi_val = data[obj_index][1][psi_index]
+    g_prev = g_values[obj_index][1][psi_index]
     for g in possible_values:
         pr_pi = pi_prob[cluster]**g*(1-pi_prob[cluster])**(1-g)
-        g_values_new = copy.deepcopy(g_values)
-        g_values_new[g_ind] = g
         if g == 1:
-            n = len(get_possible_values(o_ind=psi.O, data=data, g_values=g_values_new)[0]) - 1
-            if psi.V == obj_values[psi.O]:
+            g_values[obj_index][1][psi_index] = 1
+            n = len(get_possible_values(obj_index=obj_index, data=data, g_values=g_values)[0]) - 1
+            if psi_val == obj_values[obj_index]:
                 pr_pi *= accuracy
             else:
-                if n == 0:
-                    pr_pi *= 0.
+                pr_pi *= (1-accuracy)/n
+
+        else:
+            g_values[obj_index][1][psi_index] = 0
+            if obj_index % 2 == 0:
+                n = len(get_possible_values(obj_index=obj_index+1, data=data, g_values=g_values)[0]) - 1
+                if psi_val == obj_values[obj_index+1]:
+                    pr_pi *= accuracy
                 else:
                     pr_pi *= (1-accuracy)/n
-
-        else:
-            if psi.O % 2 == 0:
-                n = len(get_possible_values(o_ind=psi.O+1, data=data, g_values=g_values_new)[0]) - 1
-                if psi.V == obj_values[psi.O+1]:
-                    pr_pi *= accuracy
-                else:
-                    if n == 0:
-                        pr_pi *= 0.
-                    else:
-                        pr_pi *= (1-accuracy)/n
             else:
-                n = len(get_possible_values(o_ind=psi.O-1, data=data, g_values=g_values_new)[0]) - 1
-                if psi.V == obj_values[psi.O-1]:
+                n = len(get_possible_values(obj_index=obj_index-1, data=data, g_values=g_values)[0]) - 1
+                if psi_val == obj_values[obj_index-1]:
                     pr_pi *= accuracy
                 else:
-                    if n == 0:
-                        pr_pi *= 0.
-                    else:
-                        pr_pi *= (1-accuracy)/n
+                    pr_pi *= (1-accuracy)/n
         l_p.append(pr_pi)
     norm_const = sum(l_p)
-    if l_p[0] == l_p[1]:
-        g_new = np.random.binomial(1, pi_prob[cluster], 1)[0]
-    else:
-        l_p[0] /= norm_const
-        l_p[1] /= norm_const
-        g_new = np.random.binomial(1, l_p[1], 1)[0]
-    g_prev = g_values[g_ind]
-    if g_new != g_prev:
-        if g_new == 1:
-            if psi.V == obj_values[psi.O]:
-                counts[s].at[g_ind, 'c'] = 1
-            else:
-                counts[s].at[g_ind, 'c'] = 0
-        else:
-            if psi.O % 2 == 0:
-                if psi.V == obj_values[psi.O+1]:
-                    counts[s].at[g_ind, 'c'] = 1
-                else:
-                    counts[s].at[g_ind, 'c'] = 0
-            else:
-                if psi.V == obj_values[psi.O-1]:
-                    counts[s].at[g_ind, 'c'] = 1
-                else:
-                    counts[s].at[g_ind, 'c'] = 0
+    l_p[0] /= norm_const
+    l_p[1] /= norm_const
+    g_new = np.random.binomial(1, l_p[1], 1)[0]
 
-    return g_new
+    if g_new != g_prev:
+        g_values[obj_index][1][psi_index] = g_new
+
+        if g_new == 1:
+            if psi_val == obj_values[obj_index]:
+                counts[obj_index][1][psi_index] = 1
+            else:
+                counts[obj_index][1][psi_index] = 0
+        else:
+            if obj_index % 2 == 0:
+                if psi_val == obj_values[obj_index+1]:
+                    counts[obj_index][1][psi_index] = 1
+                else:
+                    counts[obj_index][1][psi_index] = 0
+            else:
+                if psi_val == obj_values[obj_index-1]:
+                    counts[obj_index][1][psi_index] = 1
+                else:
+                    counts[obj_index][1][psi_index] = 0
 
 
 def get_pi(cl_ind, g_values, data):
@@ -270,13 +260,14 @@ def gibbs_fuzzy(data=None, gt=None, accuracy_truth=None, s_number=None):
             # update g values
             for obj_index, values in g_values.iteritems():
                 for s in values[0]:
-                    update_g(s=s, g_values=g_values, pi_prob=pi_prob, obj_values=obj_values,
-                             accuracy_list=accuracy_list, counts=counts, data=data)
+                    accuracy = accuracy_list[s]
+                    update_g(s=s, obj_index=obj_index, g_values=g_values, pi_prob=pi_prob, obj_values=obj_values,
+                             accuracy=accuracy, counts=counts, data=data)
 
-            for o_ind in var_index[0]:
-                obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, g_values=g_values,
-                                                               obj_values=obj_values, counts=counts,
-                                                               data=data, accuracy_list=accuracy_list)
+            for obj_index in var_index[0]:
+                obj_values[obj_index], counts, prob[obj_index] = get_o(obj_index=obj_index, g_values=g_values,
+                                                                       obj_values=obj_values, counts=counts,
+                                                                       data=data, accuracy_list=accuracy_list)
 
             for cl_ind in range(len(pi_prob)):
                 pi_prob[cl_ind] = get_pi(cl_ind=cl_ind, g_values=g_values, data=data)
