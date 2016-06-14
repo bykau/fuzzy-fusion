@@ -8,7 +8,7 @@ import numpy as np
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/src/')
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
-# from algorithm.gibbs import gibbs
+from algorithm.gibbs import gibbs
 from algorithm.em import em
 # from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
@@ -107,13 +107,17 @@ def flights_data_run():
 
     s_number = 38
 
-    mv, mv_pr = m_voting(data=flights, gt=ground_truth)
-    print 'mv: {}'.format(mv)
-    print 'mv_pr: {}'.format(mv_pr)
+    # mv, mv_pr = m_voting(data=flights, gt=ground_truth)
+    # print 'mv: {}'.format(mv)
+    # print 'mv_pr: {}'.format(mv_pr)
+    #
+    # em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
+    # print 'em: {}'.format(em_d)
+    # print 'em_pr: {}'.format(em_pr)
 
-    em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
-    print 'em: {}'.format(em_d)
-    print 'em_pr: {}'.format(em_pr)
+    g_d, g_it, g_pr, g_ac_err = gibbs(data=flights, gt=ground_truth, s_number=s_number)
+    print 'g: {}'.format(g_d)
+    print 'g_pr: {}'.format(g_pr)
 
 
 if __name__ == '__main__':

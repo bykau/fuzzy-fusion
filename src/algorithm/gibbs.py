@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.stats import beta
 import copy
 import random
-from common import get_dist_metric, get_precision, get_accuracy_err
+from common import get_metrics, get_accuracy_err
 
 max_rounds = 5
 alpha1, alpha2 = 1, 1
@@ -21,16 +21,16 @@ def init_var(data, s_number):
     obj_index_list = data.keys()
     var_index = [obj_index_list, s_index_list]
     accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
-    obj_values = []
-    init_prob = []
+    obj_values = {}
+    init_prob = {}
     counts = {}
     for obj_index in obj_index_list:
         values = data[obj_index][1]
         possible_values = sorted(set(values))
         obj_val = max(set(values), key=values.count)
-        obj_values.append(obj_val)
+        obj_values.update({obj_index: obj_val})
         l = len(possible_values)
-        init_prob.append([1./l]*l)
+        init_prob.update({obj_index: [1./l]*l})
 
         sources = data[obj_index][0]
         counts_list = []
@@ -75,9 +75,10 @@ def get_o(o_ind, obj_values, counts, obj_data, accuracy_list):
     mult_trial = list(np.random.multinomial(1, l_p, size=1)[0])
     v_new_ind = mult_trial.index(1)
     v_new = possible_values[v_new_ind]
+    obj_values.update({o_ind: v_new})
     counts_new = l_c[v_new_ind]
 
-    return [v_new, counts_new, l_p]
+    return [counts_new, l_p]
 
 
 def get_a(data, s, counts):
@@ -101,7 +102,7 @@ def get_a(data, s, counts):
     return a_new
 
 
-def gibbs(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
+def gibbs(data=None, gt=None, accuracy_truth=None, s_number=None):
     accuracy_all = []
     var_index, obj_values, counts, prob, accuracy_list = init_var(data=data, s_number=s_number)
     iter_number = 0
@@ -110,15 +111,15 @@ def gibbs(data=None, truth_obj_list=None, accuracy_truth=None, s_number=None):
     while iter_number < max_rounds:
         for o_ind in var_index[0]:
             obj_data = data[o_ind]
-            obj_values[o_ind], counts, prob[o_ind] = get_o(o_ind=o_ind, obj_values=obj_values,
-                                                           counts=counts, obj_data=obj_data,
-                                                           accuracy_list=accuracy_list)
+            # obj_values[o_ind], counts, prob[o_ind] = \
+            counts, prob_new = get_o(o_ind=o_ind, obj_values=obj_values, counts=counts,
+                                     obj_data=obj_data, accuracy_list=accuracy_list)
+            prob.update({o_ind: prob_new})
         for s in var_index[1]:
             accuracy_list[s] = get_a(data=data, s=s, counts=counts)
 
         iter_number += 1
-        dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
-        precision = get_precision(data=data, truth_obj_list=truth_obj_list, prob=prob[0:len(truth_obj_list)])
+        dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
         dist_temp.append(dist_metric)
         precision_temp.append(precision)
         accuracy_all.append(accuracy_list)
