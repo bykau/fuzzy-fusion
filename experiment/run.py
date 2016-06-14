@@ -2,6 +2,7 @@ import random
 import sys
 
 import numpy as np
+import pandas as pd
 
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
 # sys.path.append('/home/evgeny/fuzzy-fusion/experiment/')
@@ -42,21 +43,19 @@ def s_data_run():
             print 'accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
-            for round in range(1):
+            for round in range(5):
                 print round
 
-                ground_truth = [random.randint(0, len(possible_values)-1) for i in range(obj_number)]
+                ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
                 data, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
-                ground_truth = [range(obj_number), ground_truth]
-
                 data = get_data(data=data)
 
-                mv, mv_pr = m_voting(data=data, truth_obj_list=ground_truth)
+                mv, mv_pr = m_voting(data=data, gt=ground_truth)
                 print 'mv: {}'.format(mv)
                 print 'mv_pr: {}'.format(mv_pr)
 
     #             # t_em = time.time()
-                em_d, em_it, em_pr, em_ac_err = em(data=data, truth_obj_list=ground_truth,
+                em_d, em_it, em_pr, em_ac_err = em(data=data, gt=ground_truth,
                                                    accuracy_truth=p_list, s_number=s_number)
                 print 'em: {}'.format(em_d)
                 print 'em ac err: {}'.format(em_ac_err)
@@ -67,7 +66,7 @@ def s_data_run():
     #             # print("--- %s seconds em ---" % (ex_t_em))
     #
     #             # t_g = time.time()
-                g_d, g_it, g_pr, g_ac_err = gibbs(data=data, truth_obj_list=ground_truth,
+                g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth,
                                                   accuracy_truth=p_list, s_number=s_number)
                 print 'g: {}'.format(g_d)
                 print 'g ac err: {}'.format(g_ac_err)
@@ -78,13 +77,13 @@ def s_data_run():
     #
     #             print '---'
     #
-    #             dist_list.append([p, cov, mv, em_d, g_d])
-    #             acc_err_list.append([p, cov, em_ac_err, g_ac_err])
-    #
-    # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
-    # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
-    # df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
-    # df_acc_err.to_csv('outputs/acc_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
+                dist_list.append([p, cov, mv, em_d, g_d])
+                acc_err_list.append([p, cov, em_ac_err, g_ac_err])
+
+    df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
+    df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
+    df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
+    df_acc_err.to_csv('outputs/acc_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
 
 
 def flights_data_run():
@@ -101,25 +100,24 @@ def flights_data_run():
     # f.write(str(data_py))
     # f.close()
 
-
     from flights_data import flights
     from flights_gt import ground_truth
 
     s_number = 38
 
-    # mv, mv_pr = m_voting(data=flights, gt=ground_truth)
-    # print 'mv: {}'.format(mv)
-    # print 'mv_pr: {}'.format(mv_pr)
+    mv, mv_pr = m_voting(data=flights, gt=ground_truth)
+    print 'mv: {}'.format(mv)
+    print 'mv_pr: {}'.format(mv_pr)
     #
-    # em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
-    # print 'em: {}'.format(em_d)
-    # print 'em_pr: {}'.format(em_pr)
+    em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
+    print 'em: {}'.format(em_d)
+    print 'em_pr: {}'.format(em_pr)
 
-    g_d, g_it, g_pr, g_ac_err = gibbs(data=flights, gt=ground_truth, s_number=s_number)
-    print 'g: {}'.format(g_d)
-    print 'g_pr: {}'.format(g_pr)
+    # g_d, g_it, g_pr, g_ac_err = gibbs(data=flights, gt=ground_truth, s_number=s_number)
+    # print 'g: {}'.format(g_d)
+    # print 'g_pr: {}'.format(g_pr)
 
 
 if __name__ == '__main__':
-    # s_data_run()
-    flights_data_run()
+    s_data_run()
+    # flights_data_run()
