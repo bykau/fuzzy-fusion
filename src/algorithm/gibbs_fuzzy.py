@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import copy
 from scipy.stats import beta
 import pandas as pd
 
@@ -172,9 +171,18 @@ def get_pi(cl_ind, g_values, data):
     return pi_new
 
 
-def get_a(s_counts):
-    count_p = len(s_counts[s_counts.c == 1])
-    count_m = len(s_counts[s_counts.c == 0])
+def get_a(counts, s_ind):
+    count_p, count_m = 0, 0
+    for obj in counts.keys():
+        sources = counts[obj][0]
+        if s_ind not in sources:
+            continue
+        c_ind = sources.index(s_ind)
+        c = counts[obj][1][c_ind]
+        if c == 1:
+            count_p += 1
+        else:
+            count_m += 1
     a_new = beta.rvs(count_p + alpha1, count_m + alpha2, size=1)[0]
 
     return a_new
@@ -264,8 +272,7 @@ def gibbs_fuzzy(data=None, gt=None, accuracy_truth=None, s_number=None):
                 pi_prob[cl_ind] = get_pi(cl_ind=cl_ind, g_values=g_values, data=data)
 
             for s_ind in var_index[1]:
-                s_counts = counts[s_ind]
-                accuracy_list[s_ind] = get_a(s_counts=s_counts)
+                accuracy_list[s_ind] = get_a(counts=counts, s_ind=s_ind)
             iter_number += 1
 
             dist_metric = get_dist_metric(data=data, truth_obj_list=truth_obj_list,
