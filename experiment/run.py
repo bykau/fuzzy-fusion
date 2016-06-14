@@ -43,7 +43,7 @@ def s_data_run():
             print 'accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
-            for round in range(5):
+            for round in range(1):
                 print round
 
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
@@ -80,10 +80,10 @@ def s_data_run():
                 dist_list.append([p, cov, mv, em_d, g_d])
                 acc_err_list.append([p, cov, em_ac_err, g_ac_err])
 
-    df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
-    df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
-    df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
-    df_acc_err.to_csv('outputs/acc_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
+    # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
+    # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
+    # df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
+    # df_acc_err.to_csv('outputs/acc_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
 
 
 def flights_data_run():

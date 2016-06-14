@@ -8,7 +8,6 @@ Gibbs sampling truth finder
 import numpy as np
 import pandas as pd
 from scipy.stats import beta
-import copy
 import random
 from common import get_metrics, get_accuracy_err
 
@@ -46,29 +45,22 @@ def init_var(data, s_number):
 
 def get_o(o_ind, obj_values, counts, obj_data, accuracy_list):
     l_p = []
-    l_c = []
     sources = obj_data[0]
     values = obj_data[1]
     possible_values = sorted(set(values))
     n = len(possible_values) - 1
+
     for v in possible_values:
         pr = 1
-        counts_v = copy.deepcopy(counts)
         for psi_ind, psi in enumerate(values):
             s = sources[psi_ind]
             s_accuracy = accuracy_list[s]
             if psi == v:
                 pr *= s_accuracy
-                c_new = 1
             else:
                 pr *= (1 - s_accuracy)/n
-                c_new = 0
-
-            c_old = counts[o_ind][1][psi_ind]
-            if c_new != c_old:
-                counts_v[o_ind][1][psi_ind] = c_new
         l_p.append(pr)
-        l_c.append(counts_v)
+
     norm_const = sum(l_p)
     for v_ind in range(len(possible_values)):
         l_p[v_ind] /= norm_const
@@ -76,9 +68,18 @@ def get_o(o_ind, obj_values, counts, obj_data, accuracy_list):
     v_new_ind = mult_trial.index(1)
     v_new = possible_values[v_new_ind]
     obj_values.update({o_ind: v_new})
-    counts_new = l_c[v_new_ind]
 
-    return [counts_new, l_p]
+    for psi_ind, psi in enumerate(values):
+            if psi == v_new:
+                c_new = 1
+            else:
+                c_new = 0
+
+            c_old = counts[o_ind][1][psi_ind]
+            if c_new != c_old:
+                counts[o_ind][1][psi_ind] = c_new
+
+    return l_p
 
 
 def get_a(data, s, counts):
@@ -111,9 +112,8 @@ def gibbs(data=None, gt=None, accuracy_truth=None, s_number=None):
     while iter_number < max_rounds:
         for o_ind in var_index[0]:
             obj_data = data[o_ind]
-            # obj_values[o_ind], counts, prob[o_ind] = \
-            counts, prob_new = get_o(o_ind=o_ind, obj_values=obj_values, counts=counts,
-                                     obj_data=obj_data, accuracy_list=accuracy_list)
+            prob_new = get_o(o_ind=o_ind, obj_values=obj_values, counts=counts,
+                             obj_data=obj_data, accuracy_list=accuracy_list)
             prob.update({o_ind: prob_new})
         for s in var_index[1]:
             accuracy_list[s] = get_a(data=data, s=s, counts=counts)
