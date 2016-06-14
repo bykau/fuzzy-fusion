@@ -160,15 +160,13 @@ def update_g(s, obj_index, g_values, pi_prob, obj_values, accuracy, counts, data
 
 def get_pi(cl_ind, g_values, data):
     cl = [cl_ind*2, cl_ind*2+1]
-    psi_cl_list = list(data[data.O.isin(cl)].index)
-    count_p = 0
-    count_m = 0
-    for g_ind in psi_cl_list:
-        g = g_values[g_ind]
-        if g == 1:
-            count_p += 1
-        else:
-            count_m += 1
+    count_p, count_m = 0, 0
+    for obj in cl:
+        for g in g_values[obj][1]:
+            if g == 1:
+                count_p += 1
+            else:
+                count_m += 1
     pi_new = beta.rvs(count_p + gamma1, count_m + gamma2, size=1)[0]
 
     return pi_new
@@ -251,7 +249,6 @@ def gibbs_fuzzy(data=None, gt=None, accuracy_truth=None, s_number=None):
         dist_temp = []
         precision_temp = []
         while iter_number < max_rounds:
-            # update g values
             for obj_index, values in g_values.iteritems():
                 for s in values[0]:
                     accuracy = accuracy_list[s]
