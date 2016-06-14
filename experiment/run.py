@@ -1,5 +1,6 @@
 import random
 import sys
+import time
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fus
 sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fusion/experiment/')
 from generator.generator import generator
 from algorithm.gibbs import gibbs
+from algorithm.gibbs_fuzzy import gibbs_fuzzy
 from algorithm.em import em
 # from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
@@ -50,35 +52,40 @@ def s_data_run():
                 data, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
                 data = get_data(data=data)
 
-                mv, mv_pr = m_voting(data=data, gt=ground_truth)
-                print 'mv: {}'.format(mv)
-                print 'mv_pr: {}'.format(mv_pr)
+                # mv, mv_pr = m_voting(data=data, gt=ground_truth)
+                # print 'mv: {}'.format(mv)
+                # print 'mv_pr: {}'.format(mv_pr)
 
-    #             # t_em = time.time()
-                em_d, em_it, em_pr, em_ac_err = em(data=data, gt=ground_truth,
-                                                   accuracy_truth=p_list, s_number=s_number)
-                print 'em: {}'.format(em_d)
-                print 'em ac err: {}'.format(em_ac_err)
-                print 'em_pr: {}'.format(em_pr)
-    #             # ex_t_em = time.time() - t_em
-    #             # em_t.append(ex_t_em)
+                # t_em = time.time()
+                # em_d, em_it, em_pr, em_ac_err = em(data=data, gt=ground_truth,
+                #                                    accuracy_truth=p_list, s_number=s_number)
+                # print 'em: {}'.format(em_d)
+                # print 'em ac err: {}'.format(em_ac_err)
+                # print 'em_pr: {}'.format(em_pr)
+                # ex_t_em = time.time() - t_em
+                # em_t.append(ex_t_em)
                 # print  em_it
-    #             # print("--- %s seconds em ---" % (ex_t_em))
-    #
-    #             # t_g = time.time()
-                g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth,
-                                                  accuracy_truth=p_list, s_number=s_number)
-                print 'g: {}'.format(g_d)
-                print 'g ac err: {}'.format(g_ac_err)
-                print 'g_pr: {}'.format(g_pr)
-    #             # ex_t_g = time.time() - t_g
+                # print("--- %s seconds em ---" % (ex_t_em))
+    #             t_g = time.time()
+    #             g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth,
+    #                                               accuracy_truth=p_list, s_number=s_number)
+    #             # print 'g: {}'.format(g_d)
+                # print 'g ac err: {}'.format(g_ac_err)
+                # print 'g_pr: {}'.format(g_pr)
+                # ex_t_g = time.time() - t_g
     #             # g_t.append(ex_t_g)
-    #             # print("--- %s seconds g ---" % (ex_t_g))
+    #             print("--- %s seconds g ---" % (ex_t_g))
+
+                gf_d, gf_it, gf_pr, gf_ac_err = gibbs_fuzzy(data=data, gt=ground_truth,
+                                                            accuracy_truth=p_list, s_number=s_number)
+                print 'gf: {}'.format(gf_d)
+                print 'gf ac err: {}'.format(gf_ac_err)
+                print 'gf_pr: {}'.format(gf_pr)
+
+                print '---'
     #
-    #             print '---'
-    #
-                dist_list.append([p, cov, mv, em_d, g_d])
-                acc_err_list.append([p, cov, em_ac_err, g_ac_err])
+                # dist_list.append([p, cov, mv, em_d, g_d])
+                # acc_err_list.append([p, cov, em_ac_err, g_ac_err])
 
     # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
     # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
@@ -108,14 +115,20 @@ def flights_data_run():
     mv, mv_pr = m_voting(data=flights, gt=ground_truth)
     print 'mv: {}'.format(mv)
     print 'mv_pr: {}'.format(mv_pr)
-    #
+
+    t_em = time.time()
     em_d, em_it, em_pr, accuracy_em,  = em(data=flights, gt=ground_truth, s_number=s_number)
     print 'em: {}'.format(em_d)
     print 'em_pr: {}'.format(em_pr)
+    ex_t_em = time.time() - t_em
+    print("--- %s seconds em ---" % (ex_t_em))
 
-    # g_d, g_it, g_pr, g_ac_err = gibbs(data=flights, gt=ground_truth, s_number=s_number)
-    # print 'g: {}'.format(g_d)
-    # print 'g_pr: {}'.format(g_pr)
+    t_g = time.time()
+    g_d, g_it, g_pr, g_ac_err = gibbs(data=flights, gt=ground_truth, s_number=s_number)
+    print 'g: {}'.format(g_d)
+    print 'g_pr: {}'.format(g_pr)
+    ex_t_g = time.time() - t_g
+    print("--- %s seconds g ---" % (ex_t_g))
 
 
 if __name__ == '__main__':

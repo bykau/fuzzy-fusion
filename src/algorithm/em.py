@@ -13,7 +13,7 @@ import random
 from common import get_metrics, get_accuracy_err
 
 max_rounds = 100
-eps = 10e-3
+eps = 10e-5
 
 
 def get_accuracy(data, prob, sources):
