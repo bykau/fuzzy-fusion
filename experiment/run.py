@@ -24,7 +24,7 @@ cl_size = 2
 possible_values = range(5)
 cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
 p_val_list = [0.7]#[.7, .75, .8, .85, .9, .95, 1.]
-pi = 1.
+pi = 0.8
 
 
 def get_dist(gt, output):
@@ -45,7 +45,7 @@ def s_data_run():
             print 'accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
-            for round in range(1):
+            for round in range(10):
                 print round
 
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
@@ -57,9 +57,9 @@ def s_data_run():
                 # print 'mv_pr: {}'.format(mv_pr)
 
                 # t_em = time.time()
-                # em_d, em_it, em_pr, em_ac_err = em(data=data, gt=ground_truth,
-                #                                    accuracy_truth=p_list, s_number=s_number)
-                # print 'em: {}'.format(em_d)
+                em_d, em_it, em_pr, em_ac_err = em(data=data, gt=ground_truth,
+                                                   accuracy_truth=p_list, s_number=s_number)
+                print 'em: {}'.format(em_d)
                 # print 'em ac err: {}'.format(em_ac_err)
                 # print 'em_pr: {}'.format(em_pr)
                 # ex_t_em = time.time() - t_em
@@ -67,20 +67,20 @@ def s_data_run():
                 # print  em_it
                 # print("--- %s seconds em ---" % (ex_t_em))
     #             t_g = time.time()
-    #             g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth,
-    #                                               accuracy_truth=p_list, s_number=s_number)
-    #             # print 'g: {}'.format(g_d)
+                g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth,
+                                                  accuracy_truth=p_list, s_number=s_number)
+                print 'g: {}'.format(g_d)
                 # print 'g ac err: {}'.format(g_ac_err)
                 # print 'g_pr: {}'.format(g_pr)
                 # ex_t_g = time.time() - t_g
     #             # g_t.append(ex_t_g)
     #             print("--- %s seconds g ---" % (ex_t_g))
 
-                gf_d, gf_it, gf_pr, gf_ac_err = gibbs_fuzzy(data=data, gt=ground_truth,
+                gf_d, gf_pr, gf_ac, gf_pi = gibbs_fuzzy(data=data, gt=ground_truth,
                                                             accuracy_truth=p_list, s_number=s_number)
                 print 'gf: {}'.format(gf_d)
-                print 'gf ac err: {}'.format(gf_ac_err)
-                print 'gf_pr: {}'.format(gf_pr)
+                # print 'gf ac err: {}'.format(gf_ac_err)
+                # print 'gf_pr: {}'.format(gf_pr)
 
                 print '---'
     #
