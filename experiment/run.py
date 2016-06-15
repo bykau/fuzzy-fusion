@@ -22,9 +22,9 @@ s_number = 10
 obj_number = 100
 cl_size = 2
 possible_values = range(5)
-cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
-p_val_list = [0.7]#[.7, .75, .8, .85, .9, .95, 1.]
-pi = 0.8
+cov_val_list = [0.8]#[0.7, 0.8, 0.9, 1.0]
+p_val_list = [0.8]#[.7, .75, .8, .85, .9, .95, 1.]
+pi = 0.7
 
 
 def get_dist(gt, output):

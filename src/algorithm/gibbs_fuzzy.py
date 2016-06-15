@@ -134,9 +134,19 @@ def update_g(s, obj_index, g_values, pi_prob, obj_values, accuracy, counts, data
                         pr_pi *= (1-accuracy)/n
         l_p.append(pr_pi)
     norm_const = sum(l_p)
-    l_p[0] /= norm_const
-    l_p[1] /= norm_const
-    g_new = np.random.binomial(1, l_p[1], 1)[0]
+    if l_p[0] == l_p[1]:
+        g_new = np.random.binomial(1, pi_prob[cluster], 1)[0]
+    else:
+        l_p[0] /= norm_const
+        l_p[1] /= norm_const
+        g_new = np.random.binomial(1, l_p[1], 1)[0]
+
+    # l_p[0] /= norm_const
+    # l_p[1] /= norm_const
+    # try:
+    #     g_new = np.random.binomial(1, l_p[1], 1)[0]
+    # except ValueError:
+    #     exit(1221212)
 
     if g_new != g_prev:
         g_values[obj_index][1][psi_index] = g_new
@@ -157,6 +167,8 @@ def update_g(s, obj_index, g_values, pi_prob, obj_values, accuracy, counts, data
                     counts[obj_index][1][psi_index] = 1
                 else:
                     counts[obj_index][1][psi_index] = 0
+    else:
+        g_values[obj_index][1][psi_index] = g_prev
 
 
 def get_pi(cl_ind, g_values, data):
