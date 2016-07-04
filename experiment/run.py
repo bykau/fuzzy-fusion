@@ -12,7 +12,6 @@ sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fus
 from generator.generator import generator
 from algorithm.gibbs import gibbs
 from algorithm.gibbs_fuzzy import gibbs_fuzzy
-from algorithm.temp import gibbs_fuzzy2
 from algorithm.em import em
 # from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
