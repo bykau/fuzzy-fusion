@@ -28,7 +28,7 @@ def init_var(data, s_number):
     for obj_index in obj_index_list:
         values = data[obj_index][1]
         possible_values = sorted(set(values))
-        obj_val = max(set(values), key=values.count)
+        obj_val = max(possible_values, key=values.count)
         obj_values.update({obj_index: obj_val})
         l = len(possible_values)
         init_prob.update({obj_index: [1./l]*l})
@@ -61,7 +61,7 @@ def update_obj(obj_index, g_values, obj_values, counts, data, accuracy_list, pro
             psi_list = data[obj][1]
             for s, psi_val in zip(obj_s, psi_list):
                 accuracy = accuracy_list[s]
-                psi_ind = psi_list.index(psi_val)
+                psi_ind = obj_s.index(s)
                 g = g_values[obj][1][psi_ind]
                 if (obj == obj_index and g == 1) or (obj != obj_index and g == 0):
                     if psi_val == v:
@@ -72,10 +72,7 @@ def update_obj(obj_index, g_values, obj_values, counts, data, accuracy_list, pro
     for v_ind in range(len(possible_values)):
         l_p[v_ind] /= norm_const
     mult_trial = list(np.random.multinomial(1, l_p, size=1)[0])
-    try:
-        v_new_ind = mult_trial.index(1)
-    except ValueError:
-        exit(1111111)
+    v_new_ind = mult_trial.index(1)
     v_new = possible_values[v_new_ind]
     obj_values.update({obj_index: v_new})
     prob.update({obj_index: l_p})
@@ -84,7 +81,7 @@ def update_obj(obj_index, g_values, obj_values, counts, data, accuracy_list, pro
         obj_s = data[obj][0]
         psi_list = data[obj][1]
         for s, psi_val in zip(obj_s, psi_list):
-            psi_ind = psi_list.index(psi_val)
+            psi_ind = obj_s.index(s)
             g = g_values[obj][1][psi_ind]
             if (obj == obj_index and g == 1) or (obj != obj_index and g == 0):
                 c_prev = counts[obj][1][psi_ind]
@@ -140,13 +137,6 @@ def update_g(s, obj_index, g_values, pi_prob, obj_values, accuracy, counts, data
         l_p[0] /= norm_const
         l_p[1] /= norm_const
         g_new = np.random.binomial(1, l_p[1], 1)[0]
-
-    # l_p[0] /= norm_const
-    # l_p[1] /= norm_const
-    # try:
-    #     g_new = np.random.binomial(1, l_p[1], 1)[0]
-    # except ValueError:
-    #     exit(1221212)
 
     if g_new != g_prev:
         g_values[obj_index][1][psi_index] = g_new

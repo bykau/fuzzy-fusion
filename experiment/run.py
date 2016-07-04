@@ -12,6 +12,7 @@ sys.path.append('/Users/Evgeny/wonderful_programming/fuzzy-fusion-venv/fuzzy-fus
 from generator.generator import generator
 from algorithm.gibbs import gibbs
 from algorithm.gibbs_fuzzy import gibbs_fuzzy
+from algorithm.temp import gibbs_fuzzy2
 from algorithm.em import em
 # from algorithm.em_fuzzy import em_fuzzy
 from algorithm.m_voting import m_voting
@@ -47,10 +48,10 @@ def s_data_run():
 
             for round in range(10):
                 print round
-
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
-                data, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
-                data = get_data(data=data)
+                data2, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
+                data = get_data(data=data2)
+
 
                 # mv, mv_pr = m_voting(data=data, gt=ground_truth)
                 # print 'mv: {}'.format(mv)
@@ -76,11 +77,11 @@ def s_data_run():
     #             # g_t.append(ex_t_g)
     #             print("--- %s seconds g ---" % (ex_t_g))
 
-                gf_d, gf_pr, gf_ac, gf_pi = gibbs_fuzzy(data=data, gt=ground_truth,
-                                                            accuracy_truth=p_list, s_number=s_number)
-                print 'gf: {}'.format(gf_d)
                 # print 'gf ac err: {}'.format(gf_ac_err)
                 # print 'gf_pr: {}'.format(gf_pr)
+                gf_d, gf_pr, gf_ac, gf_pi = gibbs_fuzzy(data=data, gt=ground_truth,
+                                                        accuracy_truth=p_list, s_number=s_number)
+                print 'gf: {}'.format(gf_d)
 
                 print '---'
     #
