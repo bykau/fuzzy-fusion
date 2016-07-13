@@ -131,6 +131,28 @@ def flights_data_run():
     print("--- %s seconds g ---" % (ex_t_g))
 
 
+def pop_data_run():
+    # ground_truth = pd.read_csv('../data/population/data/pop_gt.csv')
+    # gt_dict = dict(zip(ground_truth['O'].values, ground_truth['V']))
+    # data_pd = pd.read_csv('../data/population/data/pop_data.csv', low_memory=False)
+    # data_py = get_data(data=data_pd)
+    # f = open('pop_data.py', 'w')
+    # f.write(str(data_py))
+    # f.close()
+    # f2 = open('pop_gt.py', 'w')
+    # f2.write(str(gt_dict))
+    # f2.close()
+
+    from pop_data import data
+    from pop_gt import ground_truth
+
+    mv, mv_pr = m_voting(data=data, gt=ground_truth)
+    print 'mv_pr: {}'.format(mv_pr)
+
+    # em_d, em_it, em_pr, accuracy_em,  = em(data=data, gt=ground_truth, s_number=s_number)
+    # print 'em_pr: {}'.format(em_pr)
+
 if __name__ == '__main__':
-    s_data_run()
+    # s_data_run()
     # flights_data_run()
+    pop_data_run()
