@@ -149,8 +149,9 @@ def pop_data_run():
     mv, mv_pr = m_voting(data=data, gt=ground_truth)
     print 'mv_pr: {}'.format(mv_pr)
 
-    # em_d, em_it, em_pr, accuracy_em,  = em(data=data, gt=ground_truth, s_number=s_number)
-    # print 'em_pr: {}'.format(em_pr)
+    s_number = 4216
+    em_d, em_it, em_pr, accuracy_em,  = em(data=data, gt=ground_truth, s_number=s_number)
+    print 'em_pr: {}'.format(em_pr)
 
 if __name__ == '__main__':
     # s_data_run()

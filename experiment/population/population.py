@@ -28,14 +28,13 @@ def get_population():
     # data = data.sort_values(by='O')
     # obj_name = data['O'] +', ' + data['Y']
     # data = pd.DataFrame(zip(data['S'], obj_name.values, data['V'].values), columns=['S', 'O', 'V'])
-    data = pd.read_csv('pop_data.csv')
+    data = pd.read_csv('../../data/population/data/pop_data.csv')
+    s_index = range(len(data['S'].drop_duplicates()))
+    sources = sorted(data['S'].drop_duplicates())
+    s_dict = dict(zip(sources, s_index))
+    data['S'] = data['S'].map(lambda x: s_dict[x])
 
-
-
-    print 'dd'
-
-
-    # data.to_csv('pop_data.csv')
+    data.to_csv('../../data/population/data/pop_data.csv')
 
 
 def get_gt():
@@ -49,5 +48,5 @@ def get_gt():
 
 
 if __name__ == '__main__':
-    # get_population()
-    get_gt()
+    get_population()
+    # get_gt()
