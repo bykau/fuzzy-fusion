@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from scipy.stats import beta
-import pandas as pd
+# import pandas as pd
 
 
 max_rounds = 5
@@ -220,6 +220,11 @@ def get_metrics(data, gt, prob, g_values):
     pres_count = 0.
     for obj in gt_objects:
         possible_values = get_possible_values(obj_index=obj, data=data, g_values=g_values)[0]
+        # this 'if' only for getting accuracy
+        if len(possible_values) == 1:
+            norm_const -= 1
+            continue
+
         try:
             gt_val_ind = possible_values.index(gt[obj])
         except ValueError:
@@ -239,54 +244,52 @@ def get_metrics(data, gt, prob, g_values):
 
 def gibbs_fuzzy(data=None, gt=None, accuracy_truth=None, s_number=None):
     dist_list = []
-    # iter_list = []
     pi_prob_all = []
     accuracy_all = []
-    for round in range(1):
-        var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list = init_var(data=data, s_number=s_number)
-        iter_number = 0
-        dist_temp = []
-        precision_temp = []
-        while iter_number < max_rounds:
-            for obj_index, values in g_values.iteritems():
-                for s in values[0]:
-                    accuracy = accuracy_list[s]
-                    update_g(s=s, obj_index=obj_index, g_values=g_values, pi_prob=pi_prob, obj_values=obj_values,
-                             accuracy=accuracy, counts=counts, data=data)
 
-            for obj_index in var_index[0]:
-                update_obj(obj_index=obj_index, g_values=g_values,
-                           obj_values=obj_values, counts=counts,
-                           data=data, accuracy_list=accuracy_list, prob=prob)
+    var_index, g_values, obj_values, counts, prob, pi_prob, accuracy_list = init_var(data=data, s_number=s_number)
+    iter_number = 0
+    dist_temp = []
+    precision_temp = []
+    while iter_number < max_rounds:
+        for obj_index, values in g_values.iteritems():
+            for s in values[0]:
+                accuracy = accuracy_list[s]
+                update_g(s=s, obj_index=obj_index, g_values=g_values, pi_prob=pi_prob, obj_values=obj_values,
+                         accuracy=accuracy, counts=counts, data=data)
 
-            for cl_ind in range(len(pi_prob)):
-                pi_prob[cl_ind] = get_pi(cl_ind=cl_ind, g_values=g_values, data=data)
+        for obj_index in var_index[0]:
+            update_obj(obj_index=obj_index, g_values=g_values,
+                       obj_values=obj_values, counts=counts,
+                       data=data, accuracy_list=accuracy_list, prob=prob)
 
-            for s_ind in var_index[1]:
-                accuracy_list[s_ind] = get_a(counts=counts, s_ind=s_ind)
-            iter_number += 1
+        for cl_ind in range(len(pi_prob)):
+            pi_prob[cl_ind] = get_pi(cl_ind=cl_ind, g_values=g_values, data=data)
 
-            dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob, g_values=g_values)
-            precision_temp.append(precision)
-            dist_temp.append(dist_metric)
-            # print dist_metric
+        for s_ind in var_index[1]:
+            accuracy_list[s_ind] = get_a(counts=counts, s_ind=s_ind)
+        iter_number += 1
 
-        pi_prob_all.append(pi_prob)
-        accuracy_all.append(accuracy_list)
-        dist_metric = np.mean(dist_temp[-3:])
-        dist_list.append(dist_metric)
-        # iter_list.append(iter_number)
+        dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob, g_values=g_values)
+        precision_temp.append(precision)
+        # dist_temp.append(dist_metric)
 
-    dist_metric = np.mean(dist_temp[-3:])
+    # pi_prob_all.append(pi_prob)
+    # accuracy_all.append(accuracy_list)
+    # dist_metric = np.mean(dist_temp[-3:])
+    # dist_list.append(dist_metric)
+    #
+    # dist_metric = np.mean(dist_temp[-3:])
     precision = np.mean(precision_temp[-3:])
+    #
+    # accuracy_mean = []
+    # accuracy_df = pd.DataFrame(data=accuracy_all)
+    # for s in range(len(accuracy_list)):
+    #     accuracy_mean.append(np.mean(accuracy_df[s]))
+    # pi_df = pd.DataFrame(data=pi_prob_all)
+    # pi_mean = []
+    # for pi in range(len(pi_prob)):
+    #     pi_mean.append(np.mean(pi_df[pi]))
 
-    accuracy_mean = []
-    accuracy_df = pd.DataFrame(data=accuracy_all)
-    for s in range(len(accuracy_list)):
-        accuracy_mean.append(np.mean(accuracy_df[s]))
-    pi_df = pd.DataFrame(data=pi_prob_all)
-    pi_mean = []
-    for pi in range(len(pi_prob)):
-        pi_mean.append(np.mean(pi_df[pi]))
-
-    return [dist_metric, precision, accuracy_mean, pi_mean]
+    # return [dist_metric, precision, accuracy_mean, pi_mean]
+    return precision

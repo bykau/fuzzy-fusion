@@ -6,10 +6,10 @@ Gibbs sampling truth finder
 
 
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from scipy.stats import beta
 import random
-from common import get_metrics, get_accuracy_err
+from common import get_metrics, get_accuracy_err, get_alg_accuracy
 
 max_rounds = 5
 alpha1, alpha2 = 1, 1
@@ -104,11 +104,12 @@ def get_a(data, s, counts):
 
 
 def gibbs(data=None, gt=None, accuracy_truth=None, s_number=None):
-    accuracy_all = []
+    # accuracy_all = []
     var_index, obj_values, counts, prob, accuracy_list = init_var(data=data, s_number=s_number)
     iter_number = 0
-    dist_temp = []
-    precision_temp = []
+    # dist_temp = []
+    # precision_temp = []
+    accuracy_temp = []
     while iter_number < max_rounds:
         for o_ind in var_index[0]:
             obj_data = data[o_ind]
@@ -119,21 +120,27 @@ def gibbs(data=None, gt=None, accuracy_truth=None, s_number=None):
             accuracy_list[s] = get_a(data=data, s=s, counts=counts)
 
         iter_number += 1
-        dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
-        dist_temp.append(dist_metric)
-        precision_temp.append(precision)
-        accuracy_all.append(accuracy_list)
+        # dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
+        # dist_temp.append(dist_metric)
+        # precision_temp.append(precision)
+        # accuracy_all.append(accuracy_list)
 
-    dist_metric = np.mean(dist_temp[-3:])
-    precision = np.mean(precision_temp[-3:])
+        alg_accuracy = get_alg_accuracy(data=data, gt=gt, belief=prob)
+        accuracy_temp.append(alg_accuracy)
 
-    accuracy_mean = []
-    accuracy_df = pd.DataFrame(data=accuracy_all)
-    for s in range(len(accuracy_list)):
-        accuracy_mean.append(np.mean(accuracy_df[s]))
-    if accuracy_truth is not None:
-        accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
-    else:
-        accuracy_err = None
+    # dist_metric = np.mean(dist_temp[-3:])
+    # precision = np.mean(precision_temp[-3:])
 
-    return [dist_metric, iter_number, precision, accuracy_err]
+    # accuracy_mean = []
+    # accuracy_df = pd.DataFrame(data=accuracy_all)
+    # for s in range(len(accuracy_list)):
+    #     accuracy_mean.append(np.mean(accuracy_df[s]))
+    # if accuracy_truth is not None:
+    #     accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
+    # else:
+    #     accuracy_err = None
+    #
+    # return [dist_metric, iter_number, precision, accuracy_err]
+
+    alg_accuracy = np.mean(accuracy_temp[-3:])
+    return alg_accuracy

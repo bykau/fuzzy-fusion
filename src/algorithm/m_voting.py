@@ -1,4 +1,4 @@
-from common import get_metrics
+from common import get_metrics, get_alg_accuracy
 
 
 def m_voting(data, gt):
@@ -14,6 +14,9 @@ def m_voting(data, gt):
         norm_const = len(obj_values)
         obj_pr = [float(i)/norm_const for i in obj_pr]
         prob.update({obj: obj_pr})
-    dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
+    # dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
+    #
+    # return dist_metric, precision
 
-    return dist_metric, precision
+    alg_accuracy = get_alg_accuracy(data=data, gt=gt, belief=prob)
+    return alg_accuracy

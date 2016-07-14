@@ -6,11 +6,12 @@ Data Fusion: Resolvnig Conflicts from Multiple Sources
 @author: Evgeny Krivosheev (e.krivoshe@gmail.com)
 '''
 
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 import copy
 import random
-from common import get_metrics, get_accuracy_err
+from common import get_metrics, get_accuracy_err, get_alg_accuracy
+
 
 max_rounds = 100
 eps = 10e-3
@@ -65,7 +66,7 @@ def get_prob(data, accuracy_list, sources):
 
 
 def em(data=None, gt=None, accuracy_truth=None, s_number=None):
-    accuracy_all = []
+    # accuracy_all = []
     sources = range(s_number)
     accuracy_list = [random.uniform(0.8, 0.95) for i in range(s_number)]
     accuracy_delta = 0.3
@@ -77,16 +78,19 @@ def em(data=None, gt=None, accuracy_truth=None, s_number=None):
         accuracy_delta = max([abs(k-l) for k, l in zip(accuracy_prev, accuracy_list)])
         iter_number += 1
 
-    accuracy_all.append(accuracy_list)
-    dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
+    # accuracy_all.append(accuracy_list)
+    # dist_metric, precision = get_metrics(data=data, gt=gt, prob=prob)
 
-    accuracy_mean = []
-    accuracy_df = pd.DataFrame(data=accuracy_all)
-    for s in range(len(accuracy_list)):
-        accuracy_mean.append(np.mean(accuracy_df[s]))
-    if accuracy_truth is not None:
-        accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
-    else:
-        accuracy_err = None
+    # accuracy_mean = []
+    # accuracy_df = pd.DataFrame(data=accuracy_all)
+    # for s in range(len(accuracy_list)):
+    #     accuracy_mean.append(np.mean(accuracy_df[s]))
+    # if accuracy_truth is not None:
+    #     accuracy_err = get_accuracy_err(acc_truth=accuracy_truth, acc=accuracy_list)
+    # else:
+    #     accuracy_err = None
 
-    return [dist_metric, iter_number, precision, accuracy_err]
+    # return [dist_metric, iter_number, precision, accuracy_err]
+
+    alg_accuracy = get_alg_accuracy(data=data, gt=gt, belief=prob)
+    return alg_accuracy
