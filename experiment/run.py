@@ -13,9 +13,9 @@ from generator.generator import generator
 from algorithm.gibbs import gibbs
 from algorithm.gibbs_fuzzy import gibbs_fuzzy
 from algorithm.em import em
-from algorithm.average_log import average_log
 from algorithm.sums import sums
-# from algorithm.em_fuzzy import em_fuzzy
+from algorithm.average_log import average_log
+from algorithm.investment import investment
 from algorithm.m_voting import m_voting
 from algorithm.common import get_data
 
@@ -172,11 +172,8 @@ def pop_data_run():
     mv_ac = m_voting(data=data, gt=ground_truth)
     print 'MV_ac: {}'.format(mv_ac)
 
-    sm_ac = sums(data=data, gt=ground_truth, s_number=s_number)
-    print 'SUM_ac: {}'.format(sm_ac)
-
-    el_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
-    print 'AL_ac: {}'.format(el_ac)
+    inv_ac = investment(data=data, gt=ground_truth, s_number=s_number)
+    print 'INV_ac: {}'.format(inv_ac)
 
     g_ac = gibbs(data=data, gt=ground_truth, s_number=s_number)
     print 'GB_ac: {}'.format(g_ac)
