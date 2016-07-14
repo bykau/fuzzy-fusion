@@ -165,21 +165,26 @@ def pop_data_run():
 
     from pop_data import data
     from pop_gt import ground_truth
+
     s_number = 4216
 
-    # mv, mv_pr = m_voting(data=data, gt=ground_truth)
-    # print 'mv_pr: {}'.format(mv_pr)
+    mv_ac = m_voting(data=data, gt=ground_truth)
+    print 'MV_ac: {}'.format(mv_ac)
 
-    l_d, l_it, l_pr, l_ac_err = average_log(data=data, gt=ground_truth, s_number=s_number)
-    print 'ev_log_pr: {}'.format(l_pr)
-    #
-    # g_d, g_it, g_pr, g_ac_err = gibbs(data=data, gt=ground_truth, s_number=s_number)
-    # print 'g_pr: {}'.format(g_pr)
+    el_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
+    print 'AL_ac: {}'.format(el_ac)
 
-    # em_d, em_it, em_pr, accuracy_em,  = em(data=data, gt=ground_truth, s_number=s_number)
-    # print 'em_pr: {}'.format(em_pr)
+    g_ac = gibbs(data=data, gt=ground_truth, s_number=s_number)
+    print 'GB_ac: {}'.format(g_ac)
+
+    gf_ac = gibbs_fuzzy(data=data, gt=ground_truth, s_number=s_number)
+    print 'FG_ac: {}'.format(gf_ac)
+
+    em_ac = em(data=data, gt=ground_truth, s_number=s_number)
+    print 'EM_ac: {}'.format(em_ac)
+
 
 if __name__ == '__main__':
-    s_data_run()
+    # s_data_run()
     # flights_data_run()
-    # pop_data_run()
+    pop_data_run()

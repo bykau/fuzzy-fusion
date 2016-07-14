@@ -12,7 +12,7 @@ import random
 import math
 from common import get_alg_accuracy
 
-max_rounds = 100
+max_rounds = 20
 eps = 10e-3
 
 
@@ -52,6 +52,8 @@ def get_belief(data, trustw_list, sources):
             term_list[term_ind] += s_trustw
 
         b_max = max(term_list)
+        if b_max == 0.:
+            b_max = 1.
         term_list = map(lambda b: b/b_max, term_list)
         belief.update({obj_index: term_list})
 
