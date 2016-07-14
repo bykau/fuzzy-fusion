@@ -43,3 +43,28 @@ def get_data(data):
         data_new.update({obj: [s_obj, values_obj]})
 
     return data_new
+
+
+def get_alg_accuracy(data, gt, belief):
+    gt_objects = gt.keys()
+    norm_const = len(gt_objects)
+    count = 0.
+
+    for obj in gt_objects:
+        possible_values = sorted(set(data[obj][1]))
+        if len(possible_values) == 1:
+            norm_const -= 1
+            continue
+        try:
+            gt_val_ind = possible_values.index(gt[obj])
+        except ValueError:
+            norm_const -= 1
+            continue
+        obj_belief = belief[obj]
+
+        obj_ind = obj_belief.index(max(obj_belief))
+        if gt_val_ind == obj_ind:
+            count += 1
+    accuracy = count/norm_const
+
+    return accuracy
