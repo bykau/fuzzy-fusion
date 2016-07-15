@@ -52,9 +52,9 @@ def get_alg_accuracy(data, gt, belief):
 
     for obj in gt_objects:
         possible_values = sorted(set(data[obj][1]))
-        if len(possible_values) == 1:
-            norm_const -= 1
-            continue
+        # if len(possible_values) == 1:
+        #     norm_const -= 1
+        #     continue
         try:
             gt_val_ind = possible_values.index(gt[obj])
         except ValueError:

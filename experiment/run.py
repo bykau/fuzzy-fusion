@@ -3,7 +3,7 @@ import sys
 import time
 
 import numpy as np
-# import pandas as pd
+import pandas as pd
 
 # sys.path.append('/home/evgeny/fuzzy-fusion/src/')
 # sys.path.append('/home/evgeny/fuzzy-fusion/experiment/')
@@ -26,8 +26,8 @@ obj_number = 1000
 cl_size = 2
 possible_values = range(5)
 cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
-p_val_list = [0.8]#[.7, .75, .8, .85, .9, .95, 1.]
-pi = 0.9
+p_val_list = [.7, .75, .8, .85, .9, .95, 1.]
+pi = 1.
 
 
 def get_dist(gt, output):
@@ -40,6 +40,7 @@ def get_dist(gt, output):
 def s_data_run():
     # dist_list = []
     # acc_err_list = []
+    alg_ac_list = []
 
     for p in p_val_list:
         p_list = [p]*s_number
@@ -58,8 +59,8 @@ def s_data_run():
                 mv_ac = m_voting(data=data, gt=ground_truth)
                 print 'MV_ac: {}'.format(mv_ac)
 
-                el_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
-                print 'AL_ac: {}'.format(el_ac)
+                al_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
+                print 'AL_ac: {}'.format(al_ac)
 
                 inv_ac = investment(data=data, gt=ground_truth, s_number=s_number)
                 print 'INV_ac: {}'.format(inv_ac)
@@ -79,6 +80,7 @@ def s_data_run():
                 #                     accuracy_truth=p_list, s_number=s_number)
                 # print 'FG_ac: {}'.format(gf_ac)
 
+                alg_ac_list.append([p, mv_ac, al_ac, inv_ac, pInv_ac, em_ac, g_ac])
                 print '---'
 
                 # PRINT OUT ALGORITHMS DIST AND OTHER METRICS
@@ -114,7 +116,8 @@ def s_data_run():
                 # print '---'
                 # dist_list.append([p, cov, mv, em_d, g_d])
                 # acc_err_list.append([p, cov, em_ac_err, g_ac_err])
-
+    df_ac = pd.DataFrame(data=alg_ac_list, columns=['p', 'mv_ac', 'al_ac', 'inv_ac', 'pInv_ac', 'em_ac', 'g_ac'])
+    df_ac.to_csv('outputs/alg_ac_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
     # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
     # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
     # df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
