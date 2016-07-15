@@ -16,6 +16,7 @@ from algorithm.em import em
 from algorithm.sums import sums
 from algorithm.average_log import average_log
 from algorithm.investment import investment
+from algorithm.pooled_investment import pooled_investment
 from algorithm.m_voting import m_voting
 from algorithm.common import get_data
 
@@ -24,9 +25,9 @@ s_number = 10
 obj_number = 100
 cl_size = 2
 possible_values = range(5)
-cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
+cov_val_list = [1.]#[0.7, 0.8, 0.9, 1.0]
 p_val_list = [0.8]#[.7, .75, .8, .85, .9, .95, 1.]
-pi = 0.8
+pi = 1.
 
 
 def get_dist(gt, output):
@@ -47,30 +48,36 @@ def s_data_run():
             print 'accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
-            for round in range(10):
+            for round in range(1):
                 print 'Round: {}'.format(round)
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
                 data2, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
                 data = get_data(data=data2)
 
                 # PRINT OUT ALGORITHMS ACCURACIES
-                mv_ac = m_voting(data=data, gt=ground_truth)
-                print 'MV_ac: {}'.format(mv_ac)
+                # mv_ac = m_voting(data=data, gt=ground_truth)
+                # print 'MV_ac: {}'.format(mv_ac)
 
-                el_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
-                print 'AL_ac: {}'.format(el_ac)
+                # el_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
+                # print 'AL_ac: {}'.format(el_ac)
+
+                inv_ac = investment(data=data, gt=ground_truth, s_number=s_number)
+                print 'INV_ac: {}'.format(inv_ac)
+                #
+                # pInv_ac = pooled_investment(data=data, gt=ground_truth, s_number=s_number)
+                # print 'PINV_ac: {}'.format(pInv_ac)
 
                 em_ac = em(data=data, gt=ground_truth,
                            accuracy_truth=p_list, s_number=s_number)
                 print 'EM_ac: {}'.format(em_ac)
+                #
+                # g_ac = gibbs(data=data, gt=ground_truth,
+                #              accuracy_truth=p_list, s_number=s_number)
+                # print 'GB_ac: {}'.format(g_ac)
 
-                g_ac = gibbs(data=data, gt=ground_truth,
-                             accuracy_truth=p_list, s_number=s_number)
-                print 'GB_ac: {}'.format(g_ac)
-
-                gf_ac = gibbs_fuzzy(data=data, gt=ground_truth,
-                                    accuracy_truth=p_list, s_number=s_number)
-                print 'FG_ac: {}'.format(gf_ac)
+                # gf_ac = gibbs_fuzzy(data=data, gt=ground_truth,
+                #                     accuracy_truth=p_list, s_number=s_number)
+                # print 'FG_ac: {}'.format(gf_ac)
 
                 print '---'
 
@@ -175,11 +182,14 @@ def pop_data_run():
     inv_ac = investment(data=data, gt=ground_truth, s_number=s_number)
     print 'INV_ac: {}'.format(inv_ac)
 
-    g_ac = gibbs(data=data, gt=ground_truth, s_number=s_number)
-    print 'GB_ac: {}'.format(g_ac)
+    # pInv_ac = pooled_investment(data=data, gt=ground_truth, s_number=s_number)
+    # print 'PINV_ac: {}'.format(pInv_ac)
 
-    em_ac = em(data=data, gt=ground_truth, s_number=s_number)
-    print 'EM_ac: {}'.format(em_ac)
+    # g_ac = gibbs(data=data, gt=ground_truth, s_number=s_number)
+    # print 'GB_ac: {}'.format(g_ac)
+    #
+    # em_ac = em(data=data, gt=ground_truth, s_number=s_number)
+    # print 'EM_ac: {}'.format(em_ac)
 
 
 if __name__ == '__main__':
