@@ -67,7 +67,6 @@ def sums(data=None, gt=None, accuracy_truth=None, s_number=None):
         trustw_list = get_trustw(data=data, belief=belief, sources=sources, trustw_prev=trustw_prev)
         trustw_delta = max([abs(k-l) for k, l in zip(trustw_prev, trustw_list)])
         iter_number += 1
-        print iter_number
     alg_accuracy = get_alg_accuracy(data=data, gt=gt, belief=belief)
 
     return alg_accuracy

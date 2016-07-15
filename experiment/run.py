@@ -59,6 +59,9 @@ def s_data_run():
                 mv_ac = m_voting(data=data, gt=ground_truth)
                 print 'MV_ac: {}'.format(mv_ac)
 
+                sum_ac = sums(data=data, gt=ground_truth, s_number=s_number)
+                print 'SUM_ac: {}'.format(sum_ac)
+
                 al_ac = average_log(data=data, gt=ground_truth, s_number=s_number)
                 print 'AL_ac: {}'.format(al_ac)
 
@@ -80,7 +83,7 @@ def s_data_run():
                 #                     accuracy_truth=p_list, s_number=s_number)
                 # print 'FG_ac: {}'.format(gf_ac)
 
-                alg_ac_list.append([p, mv_ac, al_ac, inv_ac, pInv_ac, em_ac, g_ac])
+                alg_ac_list.append([p, mv_ac, sum_ac, al_ac, inv_ac, pInv_ac, em_ac, g_ac])
                 print '---'
 
                 # PRINT OUT ALGORITHMS DIST AND OTHER METRICS
@@ -116,7 +119,7 @@ def s_data_run():
                 # print '---'
                 # dist_list.append([p, cov, mv, em_d, g_d])
                 # acc_err_list.append([p, cov, em_ac_err, g_ac_err])
-    df_ac = pd.DataFrame(data=alg_ac_list, columns=['p', 'mv_ac', 'al_ac', 'inv_ac', 'pInv_ac', 'em_ac', 'g_ac'])
+    df_ac = pd.DataFrame(data=alg_ac_list, columns=['p', 'mv_ac', 'sums_ac', 'al_ac', 'inv_ac', 'pInv_ac', 'em_ac', 'g_ac'])
     df_ac.to_csv('outputs/alg_ac_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
     # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
     # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
