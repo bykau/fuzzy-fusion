@@ -31,7 +31,7 @@ def get_trustw(data, belief, s_obs_count, trustw_prev):
             denom = 0.
             for s_ind in obj_data[0]:
                 s_trustw = trustw_prev[s_ind]
-                s_count = s_obs_count[s]
+                s_count = s_obs_count[s_ind]
                 denom += s_trustw/s_count
 
             s_trustw_new += claim_belief/denom
@@ -84,7 +84,6 @@ def investment(data=None, gt=None, accuracy_truth=None, s_number=None):
         trustw_list = get_trustw(data=data, belief=belief, s_obs_count=s_obs_count, trustw_prev=trustw_prev)
         trustw_delta = max([abs(k-l) for k, l in zip(trustw_prev, trustw_list)])
         iter_number += 1
-
     alg_accuracy = get_alg_accuracy(data=data, gt=gt, belief=belief)
 
     return alg_accuracy
