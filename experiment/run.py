@@ -22,12 +22,12 @@ from algorithm.common import get_data
 
 
 s_number = 10
-obj_number = 100
+obj_number = 1000
 cl_size = 2
 possible_values = range(5)
-cov_val_list = [1.]#[0.7, 0.8, 0.9, 1.0]
+cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
 p_val_list = [0.8]#[.7, .75, .8, .85, .9, .95, 1.]
-pi = 1.
+pi = 0.9
 
 
 def get_dist(gt, output):
@@ -48,7 +48,7 @@ def s_data_run():
             print 'accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
-            for round in range(1):
+            for round in range(10):
                 print 'Round: {}'.format(round)
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
                 data2, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
@@ -70,10 +70,10 @@ def s_data_run():
                 em_ac = em(data=data, gt=ground_truth,
                            accuracy_truth=p_list, s_number=s_number)
                 print 'EM_ac: {}'.format(em_ac)
-                #
-                # g_ac = gibbs(data=data, gt=ground_truth,
-                #              accuracy_truth=p_list, s_number=s_number)
-                # print 'GB_ac: {}'.format(g_ac)
+
+                g_ac = gibbs(data=data, gt=ground_truth,
+                             accuracy_truth=p_list, s_number=s_number)
+                print 'GB_ac: {}'.format(g_ac)
 
                 # gf_ac = gibbs_fuzzy(data=data, gt=ground_truth,
                 #                     accuracy_truth=p_list, s_number=s_number)
@@ -193,6 +193,6 @@ def pop_data_run():
 
 
 if __name__ == '__main__':
-    # s_data_run()
+    s_data_run()
     # flights_data_run()
-    pop_data_run()
+    # pop_data_run()

@@ -9,7 +9,7 @@ Knowing What to Believe. In COLING.
 import random
 from common import get_alg_accuracy
 
-max_rounds = 40
+max_rounds = 100
 eps = 10e-3
 g = 1.4
 
