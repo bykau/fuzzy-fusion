@@ -79,7 +79,9 @@ def s_data_run():
                 alg_ac_list.append([p, mv_ac, sum_ac, al_ac, inv_ac, pInv_ac, em_ac, g_ac])
                 print '---'
 
+    # create pandas dataFrame with algorithms outputs
     df_ac = pd.DataFrame(data=alg_ac_list, columns=['p', 'mv_ac', 'sums_ac', 'al_ac', 'inv_ac', 'pInv_ac', 'em_ac', 'g_ac'])
+    # output to csv file
     df_ac.to_csv('outputs/alg_ac_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
 
 
