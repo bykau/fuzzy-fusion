@@ -20,39 +20,42 @@ from algorithm.pooled_investment import pooled_investment
 from algorithm.m_voting import m_voting
 from algorithm.common import get_data
 
-
+# number of sources
 s_number = 10
+# number of objects
 obj_number = 1000
+# cluster size
 cl_size = 2
+# possible values for an objects(for the data generator)
 possible_values = range(5)
+# sources coverage
 cov_val_list = [0.7]#[0.7, 0.8, 0.9, 1.0]
+# sources accuracy
 p_val_list = [.7, .75, .8, .85, .9, .95, 1.]
+# probability that sources don't confuse an object
 pi = 1.
 
 
-def get_dist(gt, output):
-    dist_metric = np.dot(gt, output)
-    dist_metric_norm = dist_metric/len(gt)
-
-    return dist_metric_norm
-
-
+# experiment on synthetic data
 def s_data_run():
-    # dist_list = []
-    # acc_err_list = []
+    # list of algorithms accuracy
     alg_ac_list = []
 
+    # run algorithms with different params(cov, accuracy of sources)
+    # for the data generator
     for p in p_val_list:
         p_list = [p]*s_number
         for cov in cov_val_list:
             cov_list = [cov]*s_number
-            print 'accuracy: {}'.format(p)
+            print 's accuracy: {}'.format(p)
             print 'cov: {}'.format(cov)
 
             for round in range(10):
                 print 'Round: {}'.format(round)
                 ground_truth = dict([(i, random.randint(0, len(possible_values)-1)) for i in range(obj_number)])
+                # currently the data generator output is pandas dataFrame
                 data2, g_data = generator(cov_list, p_list, ground_truth, cl_size, pi, possible_values)
+                # transform pandas dataFrame into dict format
                 data = get_data(data=data2)
 
                 # PRINT OUT ALGORITHMS ACCURACIES
@@ -120,7 +123,7 @@ def s_data_run():
                 # dist_list.append([p, cov, mv, em_d, g_d])
                 # acc_err_list.append([p, cov, em_ac_err, g_ac_err])
     df_ac = pd.DataFrame(data=alg_ac_list, columns=['p', 'mv_ac', 'sums_ac', 'al_ac', 'inv_ac', 'pInv_ac', 'em_ac', 'g_ac'])
-    df_ac.to_csv('outputs/alg_ac_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
+    # df_ac.to_csv('outputs/alg_ac_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
     # df_dist = pd.DataFrame(data=dist_list, columns=['acc', 'cov', 'mv', 'em', 'g'])
     # df_dist.to_csv('outputs/dist_v5_{}_{}.csv'.format(s_number, obj_number), index=False)
     # df_acc_err = pd.DataFrame(data=acc_err_list, columns=['acc', 'cov', 'em_ac_err', 'g_ac_err'])
