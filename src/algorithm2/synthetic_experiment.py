@@ -11,6 +11,27 @@ work_dir = '/home/bykau/Dropbox/Fuzzy/'
 n_runs = 10
 
 
+def adapter_input(Psi):
+    Psi_new = {}
+    for obj_ind, obj_data in enumerate(Psi):
+        obj_s, obj_v = [], []
+        for s, v in obj_data:
+            obj_s.append(s)
+            obj_v.append(v)
+        obj_data_new = {obj_ind: [obj_s, obj_v]}
+        Psi_new.update(obj_data_new)
+    return Psi_new
+
+
+def adapter_output(belief, data):
+    val_p = []
+    for obj_ind in sorted(belief.keys()):
+        possible_values = sorted(list(set(data[obj_ind][1])))
+        obj_p = map(lambda x: 0.0 if x != 1. else x, belief[obj_ind])
+        val_p.append(dict(zip(possible_values, obj_p)))
+    return val_p
+
+
 def accuracy():
     """
     Vary the confusion probability on synthetic data.
