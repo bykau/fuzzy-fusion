@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 import time
 from mv import majority_voting
@@ -29,7 +30,7 @@ def adapter_output(belief, data):
     for obj_ind in sorted(belief.keys()):
         possible_values = sorted(list(set(data[obj_ind][1])))
         obj_p = map(lambda x: 0.0 if x != 1. else x, belief[obj_ind])
-        val_p.append(dict(zip(possible_values, obj_p)))
+        val_p.append(defaultdict(int, zip(possible_values, obj_p)))
     return val_p
 
 
@@ -40,7 +41,7 @@ def accuracy():
     # number of sources
     N = 30
     # number of objects
-    M = 5000
+    M = 500
     # number of values per object
     V = 50
     # synthetically generated observations
@@ -49,7 +50,8 @@ def accuracy():
 
     mcmc_params = {'N_iter': 10, 'burnin': 1, 'thin': 2, 'FV': 0}
     conf_probs = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
-    res = {'mv': [], 'em': [], 'mcmc': [], 'f_mcmc': [], 'mv std': [], 'em std': [], 'mcmc std': [], 'f_mcmc std': [], 'confusion probability': conf_probs}
+    res = {'sums': [], 'mv': [], 'em': [], 'mcmc': [], 'f_mcmc': [], 'sums std': [], 'mv std': [],
+           'em std': [], 'mcmc std': [], 'f_mcmc std': [], 'confusion probability': conf_probs}
     for conf_prob in conf_probs:
         GT, GT_G, Cl, Psi = synthesize(N, M, V, density, accuracy, 1-conf_prob)
 
@@ -83,7 +85,6 @@ def accuracy():
             f_mcmc_accu.append(np.average([f_mcmc_p[obj][GT[obj]] for obj in GT.keys()]))
             sums_accu.append(np.average([sums_p[obj][GT[obj]] for obj in GT.keys()]))
 
-
         res['mv'].append(np.average(mv_accu))
         res['mv std'].append(np.std(mv_accu))
         res['em'].append(np.average(em_accu))
@@ -92,8 +93,8 @@ def accuracy():
         res['mcmc std'].append(np.std(mcmc_accu))
         res['f_mcmc'].append(np.average(f_mcmc_accu))
         res['f_mcmc std'].append(np.std(f_mcmc_accu))
-        res['sums'].append(np.average(f_mcmc_accu))
-        res['sums std'].append(np.std(f_mcmc_accu))
+        res['sums'].append(np.average(sums_accu))
+        res['sums std'].append(np.std(sums_accu))
 
         print('confusion probability: {}, mv: {:1.4f}, em: {:1.4f}, mcmc: {:1.4f}, f_mcmc: {:1.4f}, sums: {:1.4f}'.format(conf_prob,
                                                                                        np.average(mv_accu),
