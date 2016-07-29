@@ -6,9 +6,10 @@ from mcmc import mcmc
 from f_mcmc import f_mcmc
 from generator import synthesize
 import pandas as pd
+from sums import sums
 
 work_dir = '/home/bykau/Dropbox/Fuzzy/'
-n_runs = 10
+n_runs = 1
 
 
 def adapter_input(Psi):
@@ -52,7 +53,7 @@ def accuracy():
     for conf_prob in conf_probs:
         GT, GT_G, Cl, Psi = synthesize(N, M, V, density, accuracy, 1-conf_prob)
 
-        mv_accu, em_accu, mcmc_accu, f_mcmc_accu = [], [], [], []
+        mv_accu, em_accu, mcmc_accu, f_mcmc_accu, sums_accu = [], [], [], [], []
         for run in range(n_runs):
             start = time.time()
             mv_p = majority_voting(Psi)
@@ -70,10 +71,18 @@ def accuracy():
             f_mcmc_A, f_mcmc_p, f_mcmc_G = f_mcmc(N, M, Psi, Cl, mcmc_params)
             f_mcmc_t = time.time() - start
 
+            start = time.time()
+            data = adapter_input(Psi)
+            sums_belief = sums(N, M, data)
+            sums_p = adapter_output(sums_belief, data)
+            sums_t = time.time() - start
+
             mv_accu.append(np.average([mv_p[obj][GT[obj]] for obj in GT.keys()]))
             em_accu.append(np.average([em_p[obj][GT[obj]] for obj in GT.keys()]))
             mcmc_accu.append(np.average([mcmc_p[obj][GT[obj]] for obj in GT.keys()]))
             f_mcmc_accu.append(np.average([f_mcmc_p[obj][GT[obj]] for obj in GT.keys()]))
+            sums_accu.append(np.average([sums_p[obj][GT[obj]] for obj in GT.keys()]))
+
 
         res['mv'].append(np.average(mv_accu))
         res['mv std'].append(np.std(mv_accu))
@@ -83,16 +92,19 @@ def accuracy():
         res['mcmc std'].append(np.std(mcmc_accu))
         res['f_mcmc'].append(np.average(f_mcmc_accu))
         res['f_mcmc std'].append(np.std(f_mcmc_accu))
+        res['sums'].append(np.average(f_mcmc_accu))
+        res['sums std'].append(np.std(f_mcmc_accu))
 
-        print('confusion probability: {}, mv: {:1.4f}, em: {:1.4f}, mcmc: {:1.4f}, f_mcmc: {:1.4f}'.format(conf_prob,
+        print('confusion probability: {}, mv: {:1.4f}, em: {:1.4f}, mcmc: {:1.4f}, f_mcmc: {:1.4f}, sums: {:1.4f}'.format(conf_prob,
                                                                                        np.average(mv_accu),
                                                                                        np.average(em_accu),
                                                                                        np.average(mcmc_accu),
-                                                                                       np.average(f_mcmc_accu)
+                                                                                       np.average(f_mcmc_accu),
+                                                                                       np.average(sums_accu)
                                                                                        )
             )
 
-    pd.DataFrame(res).to_csv(work_dir + 'synthetic_accuracy.csv', index=False)
+    #pd.DataFrame(res).to_csv(work_dir + 'synthetic_accuracy.csv', index=False)
 
 
 def convergence():
