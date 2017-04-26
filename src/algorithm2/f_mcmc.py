@@ -13,11 +13,16 @@ work_dir = '/Users/bykau/Desktop/Fuzzy/'
 def f_mcmc(N, M, Psi, Cl, params):
     """
     MCMC inference with fuzzy observations.
-    :param N:
-    :param M:
-    :param Psi: observations
-    :param Cl: clusters where observations might be confused
-    :return:
+    :param N: number of sources
+    :param M: number of objects
+    :param Psi: observations, e.g., {obj_id1: [(src11, val11), (src12, val12), ...], obj_id2: [(src21, val21), ...]}
+    :param Cl: clusters where observations might be confused, e.g., {obj_id1: {"id": obj_id1, "other": confused_with_obj_id1}, 
+                                                                     confused_with_obj_id1: {"id": confused_with_obj_id1, "other": obj_id1}, 
+                                                                     ...}
+    :return: f_mcmc_A , f_mcmc_p, f_mcmc_G where f_mcmc_A - list of source accuracies [src_accu1, src_accu2, ...] 
+                                                 f_mcmc_p - probability of values {obj_id: {val1: prob1, val2: prob2, ...}} 
+                                                 f_mcmc_G - probability of confusion for given object, source {obj_id: {src1: {0: prob1, 1: prob2}, src2: {0: prob3, 1: prob4}}}
+                                                            e.g.: f_mcmc_G[o1][s1][0] - prob that s1 not confused on o1
     """
     K = len(Cl)
     N_iter = params['N_iter']
